@@ -1,0 +1,529 @@
+import { useState, useEffect, useRef } from “react”;
+
+const lessons = [
+{
+id: 1, title: “Salutations”, icon: “👋”, xp: 20, free: true,
+words: [
+{ baoulé: “Mo”, french: “Bonjour / Salut”, phonetic: “mo” },
+{ baoulé: “N’goran”, french: “Bonne nuit”, phonetic: “n’go-ran” },
+{ baoulé: “Akwaba”, french: “Bienvenue”, phonetic: “a-kwa-ba” },
+{ baoulé: “Mé wla ô”, french: “Au revoir”, phonetic: “mé-wla-ô” },
+],
+exercises: [
+{ type: “translate”, question: “Comment dit-on ‘Bonjour’ en baoulé ?”, answer: “Mo”, options: [“Mo”, “Akwaba”, “N’goran”, “Mé wla ô”] },
+{ type: “translate”, question: “Que signifie ‘Akwaba’ ?”, answer: “Bienvenue”, options: [“Bonjour”, “Bienvenue”, “Au revoir”, “Merci”] },
+{ type: “translate”, question: “Comment dit-on ‘Au revoir’ ?”, answer: “Mé wla ô”, options: [“Mo”, “Akwaba”, “Mé wla ô”, “N’goran”] },
+]
+},
+{
+id: 2, title: “Famille”, icon: “👨‍👩‍👧”, xp: 25, free: true,
+words: [
+{ baoulé: “Ba”, french: “Père”, phonetic: “ba” },
+{ baoulé: “Yaa”, french: “Mère”, phonetic: “ya-a” },
+{ baoulé: “Kɔkɔ”, french: “Grand-père”, phonetic: “kɔ-kɔ” },
+{ baoulé: “Nana”, french: “Grand-mère”, phonetic: “na-na” },
+],
+exercises: [
+{ type: “translate”, question: “Comment dit-on ‘Père’ en baoulé ?”, answer: “Ba”, options: [“Ba”, “Yaa”, “Kɔkɔ”, “Nana”] },
+{ type: “translate”, question: “Que signifie ‘Yaa’ ?”, answer: “Mère”, options: [“Père”, “Mère”, “Grand-père”, “Grand-mère”] },
+{ type: “translate”, question: “Comment dit-on ‘Grand-mère’ ?”, answer: “Nana”, options: [“Ba”, “Yaa”, “Kɔkɔ”, “Nana”] },
+]
+},
+{
+id: 3, title: “Chiffres”, icon: “🔢”, xp: 30, free: false,
+words: [
+{ baoulé: “Kun”, french: “Un”, phonetic: “kun” },
+{ baoulé: “Nyon”, french: “Deux”, phonetic: “n-yon” },
+{ baoulé: “Nsa”, french: “Trois”, phonetic: “n-sa” },
+{ baoulé: “Nan”, french: “Quatre”, phonetic: “nan” },
+],
+exercises: [
+{ type: “translate”, question: “Comment dit-on ‘Un’ en baoulé ?”, answer: “Kun”, options: [“Kun”, “Nyon”, “Nsa”, “Nan”] },
+{ type: “translate”, question: “Que signifie ‘Nsa’ ?”, answer: “Trois”, options: [“Un”, “Deux”, “Trois”, “Quatre”] },
+]
+},
+{
+id: 4, title: “Couleurs”, icon: “🎨”, xp: 30, free: false,
+words: [
+{ baoulé: “Finwi”, french: “Blanc”, phonetic: “fin-wi” },
+{ baoulé: “Tuntun”, french: “Noir”, phonetic: “tun-tun” },
+{ baoulé: “Glan”, french: “Rouge”, phonetic: “glan” },
+{ baoulé: “Bloman”, french: “Bleu”, phonetic: “blo-man” },
+],
+exercises: [
+{ type: “translate”, question: “Comment dit-on ‘Blanc’ en baoulé ?”, answer: “Finwi”, options: [“Finwi”, “Tuntun”, “Glan”, “Bloman”] },
+{ type: “translate”, question: “Que signifie ‘Glan’ ?”, answer: “Rouge”, options: [“Blanc”, “Noir”, “Rouge”, “Bleu”] },
+]
+},
+{
+id: 5, title: “Nourriture”, icon: “🍽️”, xp: 35, free: false,
+words: [
+{ baoulé: “Mlo”, french: “Eau”, phonetic: “mlo” },
+{ baoulé: “Ndua”, french: “Manger”, phonetic: “n-dua” },
+{ baoulé: “Ngua”, french: “Riz”, phonetic: “n-gua” },
+{ baoulé: “Aloco”, french: “Banane frite”, phonetic: “a-lo-co” },
+],
+exercises: [
+{ type: “translate”, question: “Comment dit-on ‘Eau’ en baoulé ?”, answer: “Mlo”, options: [“Mlo”, “Ndua”, “Ngua”, “Aloco”] },
+{ type: “translate”, question: “Que signifie ‘Ngua’ ?”, answer: “Riz”, options: [“Eau”, “Manger”, “Riz”, “Banane frite”] },
+]
+},
+];
+
+const LEADERBOARD = [
+{ name: “Kouadio A.”, xp: 1250, country: “🇨🇮”, streak: 32 },
+{ name: “Adjoua M.”, xp: 1100, country: “🇨🇮”, streak: 28 },
+{ name: “Yao K.”, xp: 980, country: “🇫🇷”, streak: 21 },
+{ name: “Affoué B.”, xp: 870, country: “🇺🇸”, streak: 15 },
+{ name: “Brou T.”, xp: 750, country: “🇧🇪”, streak: 12 },
+];
+
+export default function BaouleApp() {
+const [screen, setScreen] = useState(“home”);
+const [selectedLesson, setSelectedLesson] = useState(null);
+const [lessonPhase, setLessonPhase] = useState(“vocab”); // vocab | quiz
+const [vocabIndex, setVocabIndex] = useState(0);
+const [quizIndex, setQuizIndex] = useState(0);
+const [selectedAnswer, setSelectedAnswer] = useState(null);
+const [isCorrect, setIsCorrect] = useState(null);
+const [xp, setXp] = useState(120);
+const [streak, setStreak] = useState(5);
+const [hearts, setHearts] = useState(5);
+const [completedLessons, setCompletedLessons] = useState([1]);
+const [isPremium, setIsPremium] = useState(false);
+const [coins, setCoins] = useState(350);
+const [showPremium, setShowPremium] = useState(false);
+const [quizComplete, setQuizComplete] = useState(false);
+const [earnedXP, setEarnedXP] = useState(0);
+const [tab, setTab] = useState(“learn”);
+const [flip, setFlip] = useState(false);
+
+const startLesson = (lesson) => {
+if (!lesson.free && !isPremium) { setShowPremium(true); return; }
+setSelectedLesson(lesson);
+setLessonPhase(“vocab”);
+setVocabIndex(0);
+setQuizIndex(0);
+setSelectedAnswer(null);
+setIsCorrect(null);
+setQuizComplete(false);
+setEarnedXP(0);
+setFlip(false);
+setScreen(“lesson”);
+};
+
+const nextVocab = () => {
+setFlip(false);
+if (vocabIndex < selectedLesson.words.length - 1) {
+setTimeout(() => setVocabIndex(v => v + 1), 100);
+} else {
+setLessonPhase(“quiz”);
+}
+};
+
+const handleAnswer = (answer) => {
+if (selectedAnswer) return;
+const correct = answer === selectedLesson.exercises[quizIndex].answer;
+setSelectedAnswer(answer);
+setIsCorrect(correct);
+if (!correct && hearts > 0) setHearts(h => h - 1);
+if (correct) setEarnedXP(e => e + 10);
+};
+
+const nextQuiz = () => {
+if (quizIndex < selectedLesson.exercises.length - 1) {
+setQuizIndex(q => q + 1);
+setSelectedAnswer(null);
+setIsCorrect(null);
+} else {
+const finalXP = selectedLesson.xp + earnedXP;
+setXp(x => x + finalXP);
+setEarnedXP(finalXP);
+setCoins(c => c + Math.floor(finalXP / 2));
+if (!completedLessons.includes(selectedLesson.id)) {
+setCompletedLessons(l => […l, selectedLesson.id]);
+}
+setQuizComplete(true);
+}
+};
+
+const xpForLevel = (lvl) => lvl * 200;
+const currentLevel = Math.floor(xp / 200) + 1;
+const xpProgress = ((xp % 200) / 200) * 100;
+
+return (
+<div style={{ fontFamily: “‘Nunito’, sans-serif”, background: “#0d1117”, minHeight: “100vh”, color: “#fff”, maxWidth: 430, margin: “0 auto”, position: “relative”, overflow: “hidden” }}>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet" />
+
+```
+  <style>{`
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    @keyframes pop { 0%{transform:scale(0.8);opacity:0} 60%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    @keyframes glow { 0%,100%{box-shadow:0 0 20px #f5a62380} 50%{box-shadow:0 0 40px #f5a623cc} }
+    @keyframes slideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+    @keyframes flipCard { 0%{transform:rotateY(0)} 100%{transform:rotateY(180deg)} }
+    @keyframes confetti { 0%{transform:translateY(0) rotate(0);opacity:1} 100%{transform:translateY(-80px) rotate(720deg);opacity:0} }
+    .btn { cursor: pointer; border: none; transition: all 0.15s; user-select: none; }
+    .btn:active { transform: scale(0.96); }
+    .card-3d { perspective: 1000px; }
+    .flip-inner { transition: transform 0.5s; transform-style: preserve-3d; position: relative; height: 180px; }
+    .flip-inner.flipped { transform: rotateY(180deg); }
+    .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .card-back { transform: rotateY(180deg); }
+    ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+  `}</style>
+
+  {/* PREMIUM MODAL */}
+  {showPremium && (
+    <div onClick={() => setShowPremium(false)} style={{ position: "fixed", inset: 0, background: "#000a", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "linear-gradient(135deg, #1a1f2e, #0d1117)", border: "1px solid #f5a62333", borderRadius: 28, padding: 32, width: "100%", maxWidth: 380, animation: "pop 0.3s ease" }}>
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <div style={{ fontSize: 56, marginBottom: 12, animation: "float 3s infinite" }}>👑</div>
+          <h2 style={{ fontFamily: "'Baloo 2'", fontSize: 26, color: "#f5a623", marginBottom: 8 }}>BaouléPlus Premium</h2>
+          <p style={{ color: "#aaa", fontSize: 14 }}>Débloque toutes les leçons et gagne plus !</p>
+        </div>
+        {[
+          { icon: "🔓", text: "Accès illimité aux 50+ leçons" },
+          { icon: "💰", text: "Gagne 2x plus de pièces" },
+          { icon: "🏆", text: "Défis quotidiens exclusifs" },
+          { icon: "📜", text: "Certificat d'apprentissage officiel" },
+        ].map((f, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < 3 ? "1px solid #ffffff10" : "none" }}>
+            <span style={{ fontSize: 22 }}>{f.icon}</span>
+            <span style={{ fontSize: 14, color: "#ddd" }}>{f.text}</span>
+          </div>
+        ))}
+        <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 10 }}>
+          {[
+            { label: "Mensuel", price: "2 500 FCFA / mois", highlight: false },
+            { label: "Annuel", price: "20 000 FCFA / an", sub: "Économise 40% 🎉", highlight: true },
+          ].map((plan, i) => (
+            <button key={i} onClick={() => { setIsPremium(true); setShowPremium(false); }} className="btn" style={{ padding: "14px 20px", borderRadius: 16, background: plan.highlight ? "linear-gradient(135deg, #f5a623, #e8891a)" : "#1e2535", border: plan.highlight ? "none" : "1px solid #333", color: "#fff", fontWeight: 800, fontSize: 15, animation: plan.highlight ? "glow 2s infinite" : "none" }}>
+              {plan.label} — {plan.price}
+              {plan.sub && <div style={{ fontSize: 11, opacity: 0.9, marginTop: 2 }}>{plan.sub}</div>}
+            </button>
+          ))}
+          <button onClick={() => setShowPremium(false)} className="btn" style={{ padding: "12px", borderRadius: 16, background: "transparent", color: "#666", fontWeight: 700, fontSize: 13 }}>Peut-être plus tard</button>
+        </div>
+      </div>
+    </div>
+  )}
+
+  {/* LESSON SCREEN */}
+  {screen === "lesson" && selectedLesson && !quizComplete && (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      {/* Header */}
+      <div style={{ padding: "20px 20px 10px", display: "flex", alignItems: "center", gap: 12 }}>
+        <button onClick={() => setScreen("home")} className="btn" style={{ background: "#1e2535", border: "none", borderRadius: 12, padding: "8px 12px", color: "#fff", fontSize: 18 }}>✕</button>
+        <div style={{ flex: 1, height: 10, background: "#1e2535", borderRadius: 10, overflow: "hidden" }}>
+          <div style={{ height: "100%", background: "linear-gradient(90deg, #4ade80, #22c55e)", borderRadius: 10, width: lessonPhase === "vocab" ? `${((vocabIndex + 1) / selectedLesson.words.length) * 50}%` : `${50 + ((quizIndex + 1) / selectedLesson.exercises.length) * 50}%`, transition: "width 0.4s" }} />
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 4, color: "#f87171", fontWeight: 800 }}>
+          {"❤️".repeat(hearts)}
+        </div>
+      </div>
+
+      <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
+        {lessonPhase === "vocab" && (
+          <div style={{ animation: "slideUp 0.3s ease" }}>
+            <p style={{ color: "#888", fontSize: 13, marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>Vocabulaire {vocabIndex + 1}/{selectedLesson.words.length}</p>
+            <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 20 }}>Apprends ce mot</h3>
+
+            <div className="card-3d" onClick={() => setFlip(f => !f)} style={{ cursor: "pointer", marginBottom: 24 }}>
+              <div className={`flip-inner ${flip ? "flipped" : ""}`}>
+                <div className="card-face" style={{ background: "linear-gradient(135deg, #1e3a5f, #0d2137)", border: "2px solid #2a5080" }}>
+                  <div style={{ fontSize: 48, marginBottom: 8 }}>🎯</div>
+                  <div style={{ fontSize: 36, fontWeight: 900, fontFamily: "'Baloo 2'", color: "#60a5fa" }}>{selectedLesson.words[vocabIndex].baoulé}</div>
+                  <div style={{ fontSize: 13, color: "#64748b", marginTop: 6 }}>/{selectedLesson.words[vocabIndex].phonetic}/</div>
+                  <div style={{ fontSize: 11, color: "#4a5568", marginTop: 12 }}>👆 Retourner</div>
+                </div>
+                <div className="card-face card-back" style={{ background: "linear-gradient(135deg, #1e4a2f, #0d2718)", border: "2px solid #2a6040" }}>
+                  <div style={{ fontSize: 48, marginBottom: 8 }}>🇫🇷</div>
+                  <div style={{ fontSize: 28, fontWeight: 900, color: "#4ade80" }}>{selectedLesson.words[vocabIndex].french}</div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 24 }}>
+              {selectedLesson.words.map((w, i) => (
+                <div key={i} style={{ padding: "6px 12px", borderRadius: 20, background: i === vocabIndex ? "#3b82f6" : i < vocabIndex ? "#22c55e" : "#1e2535", fontSize: 12, fontWeight: 700, color: "#fff", transition: "all 0.3s" }}>
+                  {i < vocabIndex ? "✓" : i === vocabIndex ? "●" : "○"}
+                </div>
+              ))}
+            </div>
+
+            <button onClick={nextVocab} className="btn" style={{ width: "100%", padding: "16px", borderRadius: 18, background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff", fontWeight: 800, fontSize: 16 }}>
+              {vocabIndex < selectedLesson.words.length - 1 ? "Mot suivant →" : "Passer au Quiz ! 🎯"}
+            </button>
+          </div>
+        )}
+
+        {lessonPhase === "quiz" && (
+          <div style={{ animation: "slideUp 0.3s ease" }}>
+            <p style={{ color: "#888", fontSize: 13, marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>Question {quizIndex + 1}/{selectedLesson.exercises.length}</p>
+            <h3 style={{ fontSize: 19, fontWeight: 800, marginBottom: 24, lineHeight: 1.4 }}>{selectedLesson.exercises[quizIndex].question}</h3>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
+              {selectedLesson.exercises[quizIndex].options.map((opt, i) => {
+                const isSelected = selectedAnswer === opt;
+                const isRight = opt === selectedLesson.exercises[quizIndex].answer;
+                let bg = "#1e2535";
+                let border = "1px solid #2a3040";
+                if (selectedAnswer) {
+                  if (isRight) { bg = "#14532d"; border = "2px solid #22c55e"; }
+                  else if (isSelected) { bg = "#450a0a"; border = "2px solid #ef4444"; }
+                }
+                return (
+                  <button key={i} onClick={() => handleAnswer(opt)} className="btn" style={{ padding: "16px 20px", borderRadius: 16, background: bg, border, color: "#fff", fontWeight: 700, fontSize: 16, textAlign: "left", animation: isSelected && !isCorrect ? "shake 0.4s" : "none" }}>
+                    {isSelected && isCorrect && "✅ "}{isSelected && !isCorrect && "❌ "}{opt}
+                  </button>
+                );
+              })}
+            </div>
+
+            {selectedAnswer && (
+              <div style={{ animation: "slideUp 0.3s ease" }}>
+                <div style={{ padding: 16, borderRadius: 16, background: isCorrect ? "#14532d33" : "#450a0a33", border: `1px solid ${isCorrect ? "#22c55e" : "#ef4444"}`, marginBottom: 16 }}>
+                  <p style={{ fontWeight: 800, color: isCorrect ? "#4ade80" : "#f87171" }}>
+                    {isCorrect ? "🎉 Excellent !" : `💡 Bonne réponse : ${selectedLesson.exercises[quizIndex].answer}`}
+                  </p>
+                </div>
+                <button onClick={nextQuiz} className="btn" style={{ width: "100%", padding: "16px", borderRadius: 18, background: isCorrect ? "linear-gradient(135deg, #22c55e, #16a34a)" : "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff", fontWeight: 800, fontSize: 16 }}>
+                  {quizIndex < selectedLesson.exercises.length - 1 ? "Continuer →" : "Terminer la leçon ! 🏆"}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )}
+
+  {/* QUIZ COMPLETE */}
+  {screen === "lesson" && quizComplete && (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, textAlign: "center", animation: "pop 0.5s ease" }}>
+      <div style={{ fontSize: 80, marginBottom: 16, animation: "float 2s infinite" }}>🏆</div>
+      <h2 style={{ fontFamily: "'Baloo 2'", fontSize: 30, color: "#f5a623", marginBottom: 8 }}>Leçon terminée !</h2>
+      <p style={{ color: "#888", marginBottom: 32 }}>Tu progresses bien !</p>
+      <div style={{ display: "flex", gap: 16, marginBottom: 32 }}>
+        {[{ icon: "⚡", label: "XP gagnés", value: `+${earnedXP}` }, { icon: "🪙", label: "Pièces", value: `+${Math.floor(earnedXP / 2)}` }, { icon: "🔥", label: "Série", value: `${streak + 1}j` }].map((s, i) => (
+          <div key={i} style={{ background: "#1e2535", borderRadius: 16, padding: "14px 18px", flex: 1 }}>
+            <div style={{ fontSize: 24, marginBottom: 4 }}>{s.icon}</div>
+            <div style={{ fontWeight: 900, fontSize: 18, color: "#fff" }}>{s.value}</div>
+            <div style={{ fontSize: 11, color: "#888" }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+      <button onClick={() => { setScreen("home"); setStreak(s => s + 1); }} className="btn" style={{ width: "100%", padding: "16px", borderRadius: 18, background: "linear-gradient(135deg, #f5a623, #e8891a)", color: "#fff", fontWeight: 800, fontSize: 16, marginBottom: 12 }}>
+        Continuer 🚀
+      </button>
+    </div>
+  )}
+
+  {/* MAIN APP */}
+  {screen === "home" && (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      {/* Top bar */}
+      <div style={{ padding: "20px 20px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <div style={{ fontFamily: "'Baloo 2'", fontSize: 22, fontWeight: 800, color: "#f5a623" }}>BaouléApp</div>
+          <div style={{ fontSize: 11, color: "#666" }}>Langue Akan • Côte d'Ivoire 🇨🇮</div>
+        </div>
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, background: "#1e2535", padding: "6px 12px", borderRadius: 20 }}>
+            <span>🔥</span><span style={{ fontWeight: 800, fontSize: 14 }}>{streak}</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, background: "#1e2535", padding: "6px 12px", borderRadius: 20 }}>
+            <span>🪙</span><span style={{ fontWeight: 800, fontSize: 14 }}>{coins}</span>
+          </div>
+          {!isPremium && (
+            <button onClick={() => setShowPremium(true)} className="btn" style={{ background: "linear-gradient(135deg, #f5a623, #e8891a)", border: "none", borderRadius: 20, padding: "6px 14px", color: "#fff", fontWeight: 800, fontSize: 12, animation: "glow 2s infinite" }}>
+              👑 Plus
+            </button>
+          )}
+          {isPremium && <div style={{ background: "linear-gradient(135deg, #f5a623, #e8891a)", borderRadius: 20, padding: "6px 12px", fontSize: 12, fontWeight: 800 }}>👑 PRO</div>}
+        </div>
+      </div>
+
+      {/* XP Bar */}
+      <div style={{ padding: "16px 20px 0" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+          <span style={{ fontSize: 12, color: "#666" }}>Niveau {currentLevel}</span>
+          <span style={{ fontSize: 12, color: "#666" }}>{xp} / {currentLevel * 200} XP</span>
+        </div>
+        <div style={{ height: 8, background: "#1e2535", borderRadius: 8, overflow: "hidden" }}>
+          <div style={{ height: "100%", width: `${xpProgress}%`, background: "linear-gradient(90deg, #f5a623, #f59e0b)", borderRadius: 8, transition: "width 0.6s ease" }} />
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: "flex", padding: "16px 20px 0", gap: 8 }}>
+        {[{ id: "learn", icon: "📚", label: "Apprendre" }, { id: "shop", icon: "🛍️", label: "Boutique" }, { id: "earn", icon: "💰", label: "Gagner" }, { id: "rank", icon: "🏆", label: "Classement" }].map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)} className="btn" style={{ flex: 1, padding: "8px 4px", borderRadius: 12, background: tab === t.id ? "#f5a623" : "#1e2535", color: tab === t.id ? "#fff" : "#666", fontWeight: 800, fontSize: 10, border: "none" }}>
+            <div>{t.icon}</div>
+            <div>{t.label}</div>
+          </button>
+        ))}
+      </div>
+
+      <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
+
+        {/* LEARN TAB */}
+        {tab === "learn" && (
+          <div>
+            {/* Daily goal */}
+            <div style={{ background: "linear-gradient(135deg, #1e3a5f, #0d2137)", borderRadius: 20, padding: 16, marginBottom: 20, border: "1px solid #2a5080" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 2 }}>🎯 Objectif du jour</div>
+                  <div style={{ color: "#64748b", fontSize: 13 }}>2 leçons restantes</div>
+                </div>
+                <div style={{ fontSize: 32 }}>⭐</div>
+              </div>
+              <div style={{ height: 6, background: "#0d1a2a", borderRadius: 6, marginTop: 10, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: "40%", background: "linear-gradient(90deg, #3b82f6, #60a5fa)", borderRadius: 6 }} />
+              </div>
+            </div>
+
+            <h3 style={{ fontWeight: 800, marginBottom: 14, fontSize: 16 }}>📖 Leçons</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {lessons.map((lesson, i) => {
+                const done = completedLessons.includes(lesson.id);
+                const locked = !lesson.free && !isPremium;
+                return (
+                  <button key={lesson.id} onClick={() => startLesson(lesson)} className="btn" style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 18px", borderRadius: 20, background: done ? "linear-gradient(135deg, #14532d, #0d3d1f)" : locked ? "#111318" : "#1e2535", border: done ? "2px solid #22c55e" : locked ? "1px dashed #333" : "1px solid #2a3040", textAlign: "left", opacity: locked ? 0.7 : 1, animation: done ? "none" : "none" }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 16, background: locked ? "#1a1f2e" : done ? "#14532d" : "#0d2137", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0, border: done ? "2px solid #22c55e33" : "1px solid #2a3040" }}>
+                      {locked ? "🔒" : done ? "✅" : lesson.icon}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 3 }}>{lesson.title}</div>
+                      <div style={{ color: "#666", fontSize: 12 }}>{lesson.words.length} mots • {lesson.exercises.length} exercices</div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontWeight: 800, color: "#f5a623", fontSize: 14 }}>⚡{lesson.xp}</div>
+                      {!lesson.free && !isPremium && <div style={{ fontSize: 10, color: "#f5a623", marginTop: 2, background: "#f5a62322", padding: "2px 6px", borderRadius: 6 }}>PRO</div>}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* EARN TAB */}
+        {tab === "earn" && (
+          <div>
+            <h3 style={{ fontWeight: 800, marginBottom: 6, fontSize: 18 }}>💰 Gagne de l'argent</h3>
+            <p style={{ color: "#666", fontSize: 13, marginBottom: 20 }}>Convertis tes pièces et participe à des défis rémunérés !</p>
+
+            <div style={{ background: "linear-gradient(135deg, #1e3a5f, #0d2137)", borderRadius: 20, padding: 20, marginBottom: 16, border: "1px solid #2a5080" }}>
+              <div style={{ fontSize: 13, color: "#888", marginBottom: 4 }}>Tes pièces disponibles</div>
+              <div style={{ fontSize: 40, fontWeight: 900, color: "#f5a623" }}>🪙 {coins}</div>
+              <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>≈ {Math.floor(coins / 10)} FCFA</div>
+              <button onClick={() => setShowPremium(true)} className="btn" style={{ marginTop: 12, padding: "10px 20px", borderRadius: 12, background: "linear-gradient(135deg, #f5a623, #e8891a)", color: "#fff", fontWeight: 800, fontSize: 13 }}>
+                Retirer en Mobile Money 📱
+              </button>
+            </div>
+
+            {[
+              { icon: "📝", title: "Défi quotidien", desc: "Complète 3 leçons aujourd'hui", reward: "200 🪙", color: "#1e4a2f" },
+              { icon: "🏆", title: "Tournoi hebdo", desc: "Top 3 du classement = cash", reward: "5 000 FCFA", color: "#3a1e0d" },
+              { icon: "👥", title: "Parrainage", desc: "Invite un ami et gagne", reward: "1 000 FCFA", color: "#1e1e3a" },
+              { icon: "🎓", title: "Certifie-toi", desc: "Passe le test officiel", reward: "Certificat + 10 000 FCFA", color: "#2a0d2a" },
+              { icon: "📸", title: "Créateur de contenu", desc: "Crée une leçon vidéo", reward: "15% des revenus", color: "#1a2a0d" },
+            ].map((item, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 18, background: item.color, border: "1px solid #ffffff10", marginBottom: 10 }}>
+                <div style={{ fontSize: 30, flexShrink: 0 }}>{item.icon}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 800, fontSize: 14 }}>{item.title}</div>
+                  <div style={{ color: "#888", fontSize: 12 }}>{item.desc}</div>
+                </div>
+                <div style={{ fontWeight: 900, color: "#4ade80", fontSize: 13, textAlign: "right" }}>{item.reward}</div>
+              </div>
+            ))}
+
+            <div style={{ background: "#1e2535", borderRadius: 18, padding: 16, marginTop: 8, border: "1px solid #2a3040" }}>
+              <div style={{ fontWeight: 800, marginBottom: 8 }}>💳 Méthodes de retrait</div>
+              {["Orange Money 🟠", "MTN MoMo 🟡", "Wave 🔵", "Virement bancaire 🏦"].map((m, i) => (
+                <div key={i} style={{ padding: "8px 0", borderBottom: i < 3 ? "1px solid #2a3040" : "none", color: "#aaa", fontSize: 13 }}>✓ {m}</div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* SHOP TAB */}
+        {tab === "shop" && (
+          <div>
+            <h3 style={{ fontWeight: 800, marginBottom: 6, fontSize: 18 }}>🛍️ Boutique</h3>
+            <p style={{ color: "#666", fontSize: 13, marginBottom: 20 }}>Dépense tes pièces pour des avantages</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#1e2535", borderRadius: 16, padding: "12px 16px", marginBottom: 20 }}>
+              <span style={{ fontSize: 22 }}>🪙</span>
+              <span style={{ fontWeight: 900, fontSize: 20 }}>{coins} pièces</span>
+            </div>
+            {[
+              { icon: "❤️", name: "Recharge vies", desc: "+5 vies", price: 100, color: "#450a0a" },
+              { icon: "⚡", name: "Booster XP", desc: "Double XP pendant 1h", price: 200, color: "#1e3a5f" },
+              { icon: "🛡️", name: "Protection série", desc: "Garde ta série 1 jour", price: 150, color: "#3a2a0d" },
+              { icon: "🎨", name: "Avatar personnalisé", desc: "Personnalise ton profil", price: 500, color: "#2a0d2a" },
+              { icon: "📖", name: "Leçon bonus", desc: "Leçon culturelle exclusive", price: 300, color: "#1a2a0d" },
+            ].map((item, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 18, background: item.color, border: "1px solid #ffffff10", marginBottom: 10 }}>
+                <div style={{ fontSize: 32 }}>{item.icon}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 800, fontSize: 14 }}>{item.name}</div>
+                  <div style={{ color: "#888", fontSize: 12 }}>{item.desc}</div>
+                </div>
+                <button onClick={() => { if (coins >= item.price) { setCoins(c => c - item.price); setHearts(Math.min(5, hearts + (item.name === "Recharge vies" ? 5 : 0))); }}} className="btn" style={{ padding: "8px 14px", borderRadius: 12, background: coins >= item.price ? "linear-gradient(135deg, #f5a623, #e8891a)" : "#333", color: "#fff", fontWeight: 800, fontSize: 13 }}>
+                  🪙 {item.price}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* LEADERBOARD TAB */}
+        {tab === "rank" && (
+          <div>
+            <h3 style={{ fontWeight: 800, marginBottom: 6, fontSize: 18 }}>🏆 Classement mondial</h3>
+            <p style={{ color: "#666", fontSize: 13, marginBottom: 20 }}>Top apprenants de baoulé cette semaine</p>
+
+            <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+              {["Semaine", "Mois", "Tout"].map((t, i) => (
+                <button key={i} className="btn" style={{ flex: 1, padding: "8px", borderRadius: 12, background: i === 0 ? "#f5a623" : "#1e2535", color: "#fff", fontWeight: 700, fontSize: 13 }}>{t}</button>
+              ))}
+            </div>
+
+            {LEADERBOARD.map((user, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 18, background: i === 0 ? "linear-gradient(135deg, #3a2a0d, #2a1e08)" : "#1e2535", border: i === 0 ? "1px solid #f5a62344" : "1px solid #2a3040", marginBottom: 10, animation: "slideUp 0.3s ease" }}>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: i < 3 ? ["#f5a623", "#aaa", "#cd7f32"][i] : "#2a3040", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 14 }}>{i < 3 ? ["🥇", "🥈", "🥉"][i] : i + 1}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 800, fontSize: 14 }}>{user.country} {user.name}</div>
+                  <div style={{ color: "#888", fontSize: 12 }}>🔥 {user.streak} jours de suite</div>
+                </div>
+                <div style={{ fontWeight: 900, color: "#f5a623", fontSize: 15 }}>⚡{user.xp}</div>
+              </div>
+            ))}
+
+            <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 18, background: "#0d1117", border: "2px solid #3b82f6", marginTop: 8 }}>
+              <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#1e3a5f", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 14 }}>#12</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 800, fontSize: 14 }}>🇨🇮 Toi</div>
+                <div style={{ color: "#888", fontSize: 12 }}>🔥 {streak} jours</div>
+              </div>
+              <div style={{ fontWeight: 900, color: "#60a5fa", fontSize: 15 }}>⚡{xp}</div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom padding */}
+      <div style={{ height: 20 }} />
+    </div>
+  )}
+</div>
+```
+
+);
+}
