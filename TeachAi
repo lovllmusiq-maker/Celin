@@ -1,0 +1,359 @@
+import { useState } from “react”;
+
+const NIVEAUX = [
+“Collège — 6ème”, “Collège — 5ème”, “Collège — 4ème”, “Collège — 3ème”,
+“Lycée — Seconde”, “Lycée — Première”, “Lycée — Terminale”,
+“BTS / BUT”, “Licence 1”, “Licence 2”, “Licence 3”, “Master 1”, “Master 2”,
+];
+
+const MATIERES = [
+{ icon: “➕”, label: “Mathématiques” },
+{ icon: “✍️”, label: “Français” },
+{ icon: “🌍”, label: “Histoire-Géo” },
+{ icon: “🔬”, label: “Physique-Chimie” },
+{ icon: “🧬”, label: “SVT” },
+{ icon: “🇬🇧”, label: “Anglais” },
+{ icon: “💭”, label: “Philosophie” },
+{ icon: “💻”, label: “Informatique” },
+{ icon: “📊”, label: “Économie” },
+{ icon: “⚖️”, label: “Droit” },
+];
+
+const PLANS = [
+{
+id: “free”,
+label: “GRATUIT”,
+price: “0€”,
+sub: “pour toujours”,
+color: null,
+features: [“5 cours par mois”, “Quiz basiques”, “1 matière”, “Fiches limitées”],
+cta: “Commencer”,
+popular: false,
+},
+{
+id: “student”,
+label: “ÉTUDIANT”,
+price: “9€”,
+sub: “/ mois”,
+color: “#F5A623”,
+features: [“Cours illimités”, “Quiz adaptatifs”, “Toutes les matières”, “Fiches PDF téléchargeables”, “Suivi de progression”, “Programmes officiels MEN”],
+cta: “S’abonner”,
+popular: true,
+},
+{
+id: “premium”,
+label: “PREMIUM”,
+price: “19€”,
+sub: “/ mois”,
+color: null,
+features: [“Tout Étudiant +”, “Simulations d’examen”, “Correction détaillée”, “Accès parents”, “Support prioritaire”],
+cta: “S’abonner”,
+popular: false,
+},
+];
+
+export default function TeachAI() {
+const [screen, setScreen] = useState(“home”); // home | setup | plans
+const [niveau, setNiveau] = useState(””);
+const [matieres, setMatieres] = useState([]);
+const [prenom, setPrenom] = useState(””);
+const [showNiveauDrop, setShowNiveauDrop] = useState(false);
+const [toast, setToast] = useState(null);
+
+const toggleMatiere = (label) => {
+setMatieres(prev =>
+prev.includes(label) ? prev.filter(m => m !== label) : […prev, label]
+);
+};
+
+const notify = (msg) => {
+setToast(msg);
+setTimeout(() => setToast(null), 2200);
+};
+
+const handleStart = () => {
+if (!niveau || matieres.length === 0 || !prenom.trim()) {
+notify(“Remplis tous les champs 👆”);
+return;
+}
+setScreen(“plans”);
+};
+
+return (
+<div style={{
+minHeight: “100vh”,
+background: “#1C1C1E”,
+fontFamily: “‘Georgia’, ‘Times New Roman’, serif”,
+color: “#fff”,
+display: “flex”,
+flexDirection: “column”,
+maxWidth: 430,
+margin: “0 auto”,
+position: “relative”,
+overflowX: “hidden”,
+}}>
+<style>{`
+@keyframes up { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+@keyframes toast { 0%{opacity:0;transform:translateY(8px)} 15%,85%{opacity:1;transform:translateY(0)} 100%{opacity:0} }
+* { box-sizing: border-box; margin:0; padding:0; }
+::-webkit-scrollbar { display:none; }
+
+```
+    .screen { animation: up 0.4s cubic-bezier(.22,1,.36,1) both; }
+
+    .hero-bg {
+      background: radial-gradient(ellipse at 60% 30%, rgba(120,80,20,0.55) 0%, rgba(28,28,30,0) 65%),
+                  radial-gradient(ellipse at 30% 80%, rgba(80,50,10,0.3) 0%, rgba(28,28,30,0) 60%),
+                  #1C1C1E;
+    }
+
+    .feature-pill {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 99px;
+      padding: 14px 20px;
+      font-size: 15px;
+      color: #fff;
+      font-family: inherit;
+      cursor: default;
+      width: fit-content;
+    }
+
+    .setup-bg { background: #F2F0E8; color: #1C1C1E; }
+    .setup-section { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: #888; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; font-family: 'Helvetica Neue', sans-serif; }
+
+    .niveau-box {
+      background: #E8E6DE; border-radius: 14px; padding: 16px 18px;
+      font-size: 16px; color: #1C1C1E; cursor: pointer;
+      font-family: 'Georgia', serif; border: none; width: 100%;
+      text-align: left; display: flex; justify-content: space-between; align-items: center;
+    }
+    .niveau-drop {
+      background: #fff; border-radius: 14px; overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      position: absolute; left: 20px; right: 20px; z-index: 50;
+      max-height: 220px; overflow-y: auto;
+    }
+    .niveau-option {
+      padding: 14px 18px; font-size: 15px; cursor: pointer;
+      border-bottom: 1px solid #F2F0E8; font-family: 'Georgia', serif;
+      color: #1C1C1E; background: none; border-left:none; border-right:none; border-top:none;
+      width: 100%; text-align: left;
+      transition: background 0.12s;
+    }
+    .niveau-option:hover { background: #F2F0E8; }
+    .niveau-option:last-child { border-bottom: none; }
+
+    .matiere-btn {
+      border: 1.5px solid #D8D6CE; border-radius: 14px; padding: 16px 10px;
+      background: #fff; cursor: pointer; font-size: 14px; font-weight: 600;
+      color: #1C1C1E; font-family: 'Georgia', serif;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      transition: all 0.15s; text-align: center;
+    }
+    .matiere-btn.active { border-color: #1C1C1E; background: #1C1C1E; color: #fff; }
+
+    .prenom-input {
+      background: #E8E6DE; border-radius: 14px; padding: 16px 18px;
+      font-size: 16px; color: #1C1C1E; border: none; width: 100%;
+      font-family: 'Georgia', serif; outline: none;
+    }
+    .prenom-input::placeholder { color: #BDBDB5; }
+
+    .start-btn {
+      background: #1C1C1E; border-radius: 16px; padding: 20px;
+      font-size: 17px; font-weight: 700; color: #fff;
+      border: none; width: 100%; cursor: pointer;
+      font-family: 'Georgia', serif; display: flex; align-items: center;
+      justify-content: center; gap: 10px; transition: opacity 0.15s;
+    }
+    .start-btn:hover { opacity: 0.9; }
+
+    .plan-card {
+      border-radius: 22px; padding: 28px 24px; margin-bottom: 16px;
+      animation: up 0.4s cubic-bezier(.22,1,.36,1) both;
+    }
+    .plan-label { font-size: 12px; font-weight: 700; letter-spacing: 2px; margin-bottom: 14px; font-family: 'Helvetica Neue', sans-serif; }
+    .plan-price { font-size: 58px; font-weight: 900; line-height: 1; letter-spacing: -2px; }
+    .plan-sub { font-size: 15px; margin-top: 4px; margin-bottom: 20px; opacity: 0.65; font-family: 'Helvetica Neue', sans-serif; }
+    .plan-feature { display: flex; align-items: center; gap: 10px; font-size: 15px; margin-bottom: 10px; font-family: 'Helvetica Neue', sans-serif; }
+    .check { font-size: 13px; }
+    .plan-cta-dark { background: #1C1C1E; color: #fff; border: none; border-radius: 14px; padding: 18px; font-size: 17px; font-weight: 700; width: 100%; cursor: pointer; margin-top: 20px; font-family: inherit; transition: opacity 0.15s; }
+    .plan-cta-dark:hover { opacity: 0.8; }
+    .plan-cta-light { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,0.35); border-radius: 14px; padding: 18px; font-size: 17px; font-weight: 700; width: 100%; cursor: pointer; margin-top: 20px; font-family: inherit; transition: all 0.15s; }
+    .plan-cta-light:hover { background: rgba(255,255,255,0.08); }
+
+    .popular-badge {
+      background: #1C1C1E; color: #F5A623; font-size: 12px; font-weight: 800;
+      padding: 8px 18px; border-radius: 99px; display: inline-flex;
+      align-items: center; gap: 6px; letter-spacing: 1px;
+      font-family: 'Helvetica Neue', sans-serif;
+      position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+      white-space: nowrap;
+    }
+  `}</style>
+
+  {/* Toast */}
+  {toast && (
+    <div style={{
+      position: "fixed", top: 24, left: "50%", transform: "translateX(-50%)",
+      background: "#1C1C1E", color: "#fff", padding: "12px 22px",
+      borderRadius: 14, fontWeight: 600, fontSize: 14, zIndex: 999,
+      animation: "toast 2.2s ease forwards", whiteSpace: "nowrap",
+      boxShadow: "0 8px 24px rgba(0,0,0,0.3)", fontFamily: "Helvetica Neue, sans-serif",
+    }}>{toast}</div>
+  )}
+
+  {/* ══ HOME ══ */}
+  {screen === "home" && (
+    <div className="screen hero-bg" style={{ minHeight: "100vh", padding: "56px 24px 48px" }}>
+      {/* Logo */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 36 }}>
+        <div style={{ width: 48, height: 48, borderRadius: 14, background: "#F5A623", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🎓</div>
+        <span style={{ fontSize: 22, fontWeight: 700, fontFamily: "Helvetica Neue, sans-serif" }}>
+          Teach<span style={{ color: "#F5A623" }}>AI</span>
+        </span>
+      </div>
+
+      {/* Hero headline */}
+      <h1 style={{ fontSize: 46, fontWeight: 900, lineHeight: 1.08, marginBottom: 24, letterSpacing: "-0.5px" }}>
+        Apprends{" "}
+        <span style={{ color: "#F5A623", fontStyle: "italic", fontWeight: 900 }}>autrement</span>
+        ,{"\n"}réussis vraiment.
+      </h1>
+
+      {/* Subtitle */}
+      <p style={{ fontSize: 17, lineHeight: 1.65, color: "rgba(255,255,255,0.62)", marginBottom: 40, fontFamily: "Helvetica Neue, sans-serif", fontWeight: 400 }}>
+        Un professeur IA qui adapte chaque cours à ton niveau, ton programme scolaire et ta façon d'apprendre — avec des visuels, des exemples et des évaluations.
+      </p>
+
+      {/* Feature pills */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 44 }}>
+        {[
+          ["🎒", "Collège → Master"],
+          ["📚", "Tous les programmes officiels"],
+          ["🧠", "Mémoire visuelle"],
+          ["✅", "Quiz + Fiches de révision"],
+          ["🔄", "Mis à jour en temps réel"],
+        ].map(([icon, label]) => (
+          <div key={label} className="feature-pill">
+            <span style={{ fontSize: 18 }}>{icon}</span>
+            <span style={{ fontFamily: "Helvetica Neue, sans-serif", fontSize: 15 }}>{label}</span>
+          </div>
+        ))}
+      </div>
+
+      <button onClick={() => setScreen("setup")} style={{
+        background: "#F5A623", border: "none", borderRadius: 16,
+        padding: "18px 32px", fontSize: 17, fontWeight: 700, color: "#1C1C1E",
+        cursor: "pointer", width: "100%", fontFamily: "Helvetica Neue, sans-serif",
+        transition: "opacity 0.15s",
+      }}>
+        Commencer gratuitement →
+      </button>
+    </div>
+  )}
+
+  {/* ══ SETUP ══ */}
+  {screen === "setup" && (
+    <div className="screen setup-bg" style={{ minHeight: "100vh", padding: "52px 20px 48px", position: "relative" }}>
+
+      {/* Niveau scolaire */}
+      <div style={{ marginBottom: 28 }}>
+        <div className="setup-section">🏫 NIVEAU SCOLAIRE</div>
+        <button className="niveau-box" onClick={() => setShowNiveauDrop(v => !v)}>
+          <span style={{ color: niveau ? "#1C1C1E" : "#BDBDB5" }}>{niveau || "Choisir mon niveau…"}</span>
+          <span style={{ color: "#BDBDB5", fontSize: 12 }}>▾</span>
+        </button>
+        {showNiveauDrop && (
+          <div className="niveau-drop">
+            {NIVEAUX.map(n => (
+              <button key={n} className="niveau-option" onClick={() => { setNiveau(n); setShowNiveauDrop(false); }}>
+                {n}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Matières */}
+      <div style={{ marginBottom: 28 }}>
+        <div className="setup-section">📖 MATIÈRES PRINCIPALES</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {MATIERES.map(m => (
+            <button key={m.label} className={`matiere-btn ${matieres.includes(m.label) ? "active" : ""}`}
+              onClick={() => toggleMatiere(m.label)}>
+              <span style={{ fontSize: 22 }}>{m.icon}</span>
+              <span style={{ fontSize: 13 }}>{m.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Prénom */}
+      <div style={{ marginBottom: 28 }}>
+        <div className="setup-section">👤 TON PRÉNOM</div>
+        <input className="prenom-input" placeholder="ex: Emma" value={prenom} onChange={e => setPrenom(e.target.value)} />
+      </div>
+
+      <button className="start-btn" onClick={handleStart}>
+        🚀 <span>Commencer mes cours</span>
+      </button>
+    </div>
+  )}
+
+  {/* ══ PLANS ══ */}
+  {screen === "plans" && (
+    <div className="screen" style={{ minHeight: "100vh", background: "#1C1C1E", padding: "52px 20px 48px" }}>
+      <div style={{ textAlign: "center", marginBottom: 36 }}>
+        <h2 style={{ fontSize: 34, fontWeight: 900, letterSpacing: "-0.5px", marginBottom: 10 }}>
+          Choisis ton formule
+        </h2>
+        <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 16, fontFamily: "Helvetica Neue, sans-serif" }}>
+          Commence gratuitement, évolue à ton rythme
+        </p>
+      </div>
+
+      {PLANS.map((plan, i) => (
+        <div key={plan.id} style={{ position: "relative", marginBottom: plan.popular ? 32 : 16 }}>
+          {plan.popular && (
+            <div className="popular-badge">⭐ POPULAIRE</div>
+          )}
+          <div className="plan-card" style={{
+            background: plan.color ? plan.color : "rgba(255,255,255,0.07)",
+            color: plan.color ? "#1C1C1E" : "#fff",
+            animationDelay: `${i * 0.1}s`,
+          }}>
+            <div className="plan-label" style={{ color: plan.color ? "#1C1C1E" : "rgba(255,255,255,0.55)" }}>
+              {plan.label}
+            </div>
+            <div className="plan-price">{plan.price}</div>
+            <div className="plan-sub">{plan.sub}</div>
+            <div style={{ marginTop: 4 }}>
+              {plan.features.map(f => (
+                <div key={f} className="plan-feature" style={{ color: plan.color ? "#1C1C1E" : "#fff" }}>
+                  <span className="check" style={{ color: plan.color ? "#1C1C1E" : "#F5A623" }}>✓</span>
+                  {f}
+                </div>
+              ))}
+            </div>
+            {plan.color ? (
+              <button className="plan-cta-dark" onClick={() => notify(`Plan ${plan.label} sélectionné !`)}>
+                {plan.cta}
+              </button>
+            ) : (
+              <button className="plan-cta-light" onClick={() => notify(`Plan ${plan.label} sélectionné !`)}>
+                {plan.cta}
+              </button>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+```
+
+);
+}
