@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IvoireStay — Résidences Meublées en Côte d'Ivoire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #faf8f4;
+  --bg2: #f2ede4;
+  --bg3: #ebe4d6;
+  --surface: #ffffff;
+  --surface2: #f7f3ec;
+  --border: #e5ddd0;
+  --border2: #d6ccb8;
+  --orange: #e8701a;
+  --orange2: #f08832;
+  --orange-dim: rgba(232,112,26,0.1);
+  --green: #1a7a3c;
+  --green2: #22a050;
+  --green-dim: rgba(26,122,60,0.1);
+  --gold: #c49a2e;
+  --gold-dim: rgba(196,154,46,0.12);
+  --text: #1a1410;
+  --text2: #5a4e3a;
+  --text3: #9a8a72;
+  --red: #c0392b;
+  --radius: 14px;
+  --font-head: 'Playfair Display', serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+  --shadow: 0 4px 24px rgba(26,20,16,0.08);
+  --shadow-lg: 0 16px 60px rgba(26,20,16,0.14);
+}
+
+- { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+
+body {
+font-family: var(–font-body);
+background: var(–bg);
+color: var(–text);
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background: var(–bg2); }
+::-webkit-scrollbar-thumb { background: var(–border2); border-radius:3px; }
+
+/* ─── HEADER ─── */
+header {
+position: fixed; top:0; left:0; right:0; z-index:100;
+display:flex; align-items:center; justify-content:space-between;
+padding: 0 44px; height:70px;
+background: rgba(250,248,244,0.95);
+backdrop-filter: blur(20px);
+border-bottom: 1px solid var(–border);
+box-shadow: 0 1px 20px rgba(26,20,16,0.06);
+}
+
+.logo {
+font-family: var(–font-head); font-size:24px; font-weight:800;
+color: var(–text); display:flex; align-items:center; gap:10px; cursor:pointer;
+letter-spacing:-0.5px;
+}
+.logo-flag { display:flex; gap:2px; align-items:center; }
+.flag-stripe { width:8px; height:22px; border-radius:2px; }
+.logo em { font-style:normal; color:var(–orange); }
+
+nav { display:flex; align-items:center; gap:6px; }
+nav a {
+font-size:14px; font-weight:500; color:var(–text2);
+padding:7px 16px; border-radius:10px; cursor:pointer;
+transition:all .2s; text-decoration:none;
+}
+nav a:hover { color:var(–orange); background:var(–orange-dim); }
+
+.header-actions { display:flex; align-items:center; gap:10px; }
+.btn-outline {
+font-family:var(–font-body); font-size:14px; font-weight:600;
+padding:9px 20px; border-radius:10px; cursor:pointer;
+background:transparent; border:1.5px solid var(–border2); color:var(–text2);
+transition:all .2s;
+}
+.btn-outline:hover { border-color:var(–orange); color:var(–orange); }
+.btn-primary {
+font-family:var(–font-body); font-size:14px; font-weight:700;
+padding:9px 22px; border-radius:10px; cursor:pointer;
+background:var(–orange); border:none; color:#fff;
+transition:all .2s; box-shadow:0 4px 16px rgba(232,112,26,0.3);
+}
+.btn-primary:hover { background:var(–orange2); transform:translateY(-1px); box-shadow:0 6px 24px rgba(232,112,26,0.4); }
+
+/* ─── HERO ─── */
+.hero {
+padding: 110px 44px 70px;
+display:flex; flex-direction:column; align-items:center;
+text-align:center; position:relative; overflow:hidden;
+min-height: 620px; justify-content:center;
+}
+
+.hero-bg {
+position:absolute; inset:0; z-index:0;
+background:
+radial-gradient(ellipse 70% 60% at 15% 50%, rgba(232,112,26,0.08) 0%, transparent 70%),
+radial-gradient(ellipse 60% 70% at 85% 30%, rgba(26,122,60,0.06) 0%, transparent 70%),
+radial-gradient(ellipse 50% 50% at 50% 100%, rgba(196,154,46,0.05) 0%, transparent 60%);
+}
+
+.hero-pattern {
+position:absolute; inset:0; z-index:0; opacity:.04;
+background-image: url(“data:image/svg+xml,%3Csvg width=‘60’ height=‘60’ viewBox=‘0 0 60 60’ xmlns=‘http://www.w3.org/2000/svg’%3E%3Cg fill=‘none’ fill-rule=‘evenodd’%3E%3Cg fill=’%23e8701a’ fill-opacity=‘1’%3E%3Cpath d=‘M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z’/%3E%3C/g%3E%3C/g%3E%3C/svg%3E”);
+}
+
+.hero-badge {
+position:relative; z-index:1;
+display:inline-flex; align-items:center; gap:8px;
+background:var(–orange-dim); border:1px solid rgba(232,112,26,0.25);
+border-radius:100px; padding:6px 18px; font-size:12.5px;
+color:var(–orange); font-weight:700; letter-spacing:0.4px;
+margin-bottom:28px; animation:fadeUp .6s ease both;
+}
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:none} }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+@keyframes shimmer { from{background-position:200% 0} to{background-position:-200% 0} }
+
+h1 {
+position:relative; z-index:1;
+font-family:var(–font-head); font-size:clamp(38px, 5.5vw, 72px);
+font-weight:800; line-height:1.08; letter-spacing:-1.5px;
+color:var(–text); max-width:860px;
+animation:fadeUp .6s .1s ease both;
+}
+h1 em { font-style:italic; color:var(–orange); }
+h1 span.vert { color:var(–green); }
+
+.hero-sub {
+position:relative; z-index:1;
+font-size:17px; color:var(–text2); max-width:520px;
+line-height:1.75; margin-top:20px; font-weight:400;
+animation:fadeUp .6s .2s ease both;
+}
+
+/* ─── SEARCH BAR ─── */
+.search-wrap {
+position:relative; z-index:1; margin-top:40px;
+width:100%; max-width:820px;
+animation:fadeUp .6s .3s ease both;
+}
+.search-bar {
+display:flex; align-items:center;
+background:var(–surface); border:1.5px solid var(–border);
+border-radius:18px; padding:7px 7px 7px 24px;
+gap:0; box-shadow: var(–shadow-lg);
+transition:border-color .2s, box-shadow .2s;
+}
+.search-bar:focus-within {
+border-color:var(–orange);
+box-shadow:0 0 0 4px rgba(232,112,26,0.1), var(–shadow-lg);
+}
+.search-divider { width:1px; height:36px; background:var(–border); flex-shrink:0; margin:0 4px; }
+.search-field { display:flex; flex-direction:column; flex:1; min-width:0; padding:0 12px; }
+.search-field label { font-size:10px; font-weight:700; color:var(–text3); letter-spacing:.6px; text-transform:uppercase; margin-bottom:2px; }
+.search-field input, .search-field select {
+background:transparent; border:none; outline:none;
+font-family:var(–font-body); font-size:14px; font-weight:500; color:var(–text);
+}
+.search-field select option { background:var(–surface); color:var(–text); }
+.btn-search {
+background:var(–orange); border:none; border-radius:13px;
+padding:15px 30px; font-family:var(–font-head); font-size:15px;
+font-weight:700; color:#fff; cursor:pointer; white-space:nowrap;
+transition:all .2s; flex-shrink:0;
+box-shadow:0 4px 16px rgba(232,112,26,0.35);
+}
+.btn-search:hover { background:var(–orange2); transform:scale(1.02); }
+
+.hero-stats {
+position:relative; z-index:1;
+display:flex; align-items:center; gap:44px; margin-top:40px;
+animation:fadeUp .6s .4s ease both;
+}
+.stat { text-align:center; }
+.stat strong { font-family:var(–font-head); font-size:28px; font-weight:800; color:var(–text); display:block; }
+.stat span { font-size:12px; color:var(–text3); font-weight:500; }
+.stat-sep { width:1px; height:40px; background:var(–border2); }
+
+/* ─── VILLES ─── */
+.villes-section { padding:60px 44px 0; }
+.villes-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:14px; margin-top:28px; }
+.ville-card {
+background:var(–surface); border:1.5px solid var(–border);
+border-radius:16px; padding:20px 16px; text-align:center;
+cursor:pointer; transition:all .25s; position:relative; overflow:hidden;
+}
+.ville-card::before {
+content:’’; position:absolute; bottom:0; left:0; right:0; height:3px;
+background:linear-gradient(90deg, var(–orange), var(–gold));
+transform:scaleX(0); transition:transform .3s; transform-origin:left;
+}
+.ville-card:hover::before { transform:scaleX(1); }
+.ville-card:hover { border-color:var(–orange); transform:translateY(-4px); box-shadow:var(–shadow-lg); }
+.ville-emoji { font-size:32px; margin-bottom:8px; display:block; }
+.ville-name { font-family:var(–font-head); font-size:15px; font-weight:700; color:var(–text); }
+.ville-count { font-size:11.5px; color:var(–text3); margin-top:3px; font-weight:500; }
+
+/* ─── SECTION ─── */
+section { padding:72px 44px; }
+.section-head {
+display:flex; align-items:flex-end; justify-content:space-between;
+margin-bottom:36px;
+}
+.section-head h2 {
+font-family:var(–font-head); font-size:32px; font-weight:800;
+letter-spacing:-1px; color:var(–text);
+}
+.section-head p { font-size:14px; color:var(–text3); margin-top:5px; font-weight:400; }
+.see-all {
+font-size:13.5px; font-weight:700; color:var(–orange); cursor:pointer;
+border:1.5px solid rgba(232,112,26,0.3); padding:8px 18px;
+border-radius:10px; transition:all .2s; background:transparent;
+font-family:var(–font-body);
+}
+.see-all:hover { background:var(–orange-dim); border-color:var(–orange); }
+
+/* ─── FILTERS ─── */
+.filters { display:flex; align-items:center; gap:8px; margin-bottom:28px; flex-wrap:wrap; }
+.filter-chip {
+padding:8px 18px; border-radius:100px; font-size:13px; font-weight:600;
+border:1.5px solid var(–border); background:var(–surface); color:var(–text2);
+cursor:pointer; transition:all .2s;
+}
+.filter-chip:hover, .filter-chip.active {
+border-color:var(–orange); color:var(–orange); background:var(–orange-dim);
+}
+
+/* ─── RESIDENCE GRID ─── */
+.residence-grid {
+display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr));
+gap:26px;
+}
+.res-card {
+background:var(–surface); border:1.5px solid var(–border);
+border-radius:20px; overflow:hidden; transition:all .28s; cursor:pointer;
+box-shadow:var(–shadow);
+}
+.res-card:hover {
+border-color:rgba(232,112,26,0.4); transform:translateY(-6px);
+box-shadow: var(–shadow-lg);
+}
+.card-img {
+position:relative; height:220px; overflow:hidden;
+background:linear-gradient(135deg, var(–bg2), var(–bg3));
+}
+.card-img-inner {
+width:100%; height:100%;
+display:flex; align-items:center; justify-content:center;
+font-size:90px; transition:transform .5s;
+}
+.res-card:hover .card-img-inner { transform:scale(1.06); }
+
+.card-badge {
+position:absolute; top:14px; left:14px;
+background:rgba(255,255,255,0.92); backdrop-filter:blur(8px);
+border-radius:9px; padding:4px 12px;
+font-size:11.5px; font-weight:700; color:var(–orange);
+}
+.card-fav {
+position:absolute; top:14px; right:14px;
+width:36px; height:36px; background:rgba(255,255,255,0.9);
+border-radius:50%; display:flex; align-items:center; justify-content:center;
+font-size:17px; cursor:pointer; transition:all .2s; border:none;
+box-shadow:0 2px 8px rgba(0,0,0,.12);
+}
+.card-fav:hover { transform:scale(1.15); background:#fff; }
+.card-avail {
+position:absolute; bottom:14px; left:14px;
+border-radius:8px; padding:4px 12px;
+font-size:11.5px; font-weight:700;
+}
+.avail-yes { background:rgba(26,122,60,0.9); color:#fff; }
+.avail-no { background:rgba(192,57,43,0.85); color:#fff; }
+
+.card-body { padding:20px; }
+.card-location {
+font-size:12px; color:var(–text3); display:flex; align-items:center; gap:4px;
+margin-bottom:7px; font-weight:600;
+}
+.card-name {
+font-family:var(–font-head); font-size:19px; font-weight:700;
+color:var(–text); letter-spacing:-.3px; margin-bottom:7px;
+}
+.card-desc { font-size:13.5px; color:var(–text2); line-height:1.65; margin-bottom:14px; }
+.card-amenities { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+.amenity {
+display:flex; align-items:center; gap:4px;
+padding:4px 10px; border-radius:8px; font-size:12px; font-weight:600;
+background:var(–surface2); color:var(–text2); border:1px solid var(–border);
+}
+.card-footer {
+display:flex; align-items:center; justify-content:space-between;
+padding-top:14px; border-top:1px solid var(–border);
+}
+.card-rating { display:flex; align-items:center; gap:6px; font-size:13px; }
+.stars { color:var(–orange); font-size:13px; }
+.rating-val { font-weight:700; color:var(–text); }
+.rating-count { color:var(–text3); font-size:12px; }
+.card-price { text-align:right; }
+.price-from { font-size:10.5px; color:var(–text3); text-transform:uppercase; letter-spacing:.5px; font-weight:600; }
+.price-val { font-family:var(–font-head); font-size:22px; font-weight:800; color:var(–orange); }
+.price-unit { font-size:12px; color:var(–text3); }
+
+/* ─── MAP ─── */
+.map-section { padding:0 44px 72px; }
+.map-wrap {
+border-radius:24px; overflow:hidden; border:1.5px solid var(–border);
+background:var(–surface2); position:relative; height:440px;
+display:flex; align-items:center; justify-content:center;
+box-shadow:var(–shadow);
+}
+.map-bg {
+position:absolute; inset:0;
+background:
+linear-gradient(180deg, rgba(26,122,60,0.06) 0%, transparent 40%),
+repeating-linear-gradient(0deg, transparent, transparent 49px, rgba(200,185,160,0.3) 49px, rgba(200,185,160,0.3) 50px),
+repeating-linear-gradient(90deg, transparent, transparent 49px, rgba(200,185,160,0.3) 49px, rgba(200,185,160,0.3) 50px);
+}
+.map-ci-outline {
+position:absolute; font-size:240px; opacity:.04; user-select:none;
+}
+.map-center { text-align:center; position:relative; z-index:1; }
+.map-center h3 { font-family:var(–font-head); font-size:22px; font-weight:700; color:var(–text); margin-bottom:8px; }
+.map-center p { font-size:14px; color:var(–text2); margin-bottom:22px; }
+.map-pins { position:absolute; inset:0; pointer-events:none; }
+.map-pin {
+position:absolute; transform:translate(-50%,-100%);
+display:flex; flex-direction:column; align-items:center;
+pointer-events:all; cursor:pointer;
+}
+.pin-body {
+background:var(–orange); border-radius:50% 50% 50% 0;
+transform:rotate(-45deg); width:46px; height:46px;
+display:flex; align-items:center; justify-content:center;
+box-shadow:0 6px 20px rgba(232,112,26,0.5); transition:transform .2s;
+}
+.map-pin:hover .pin-body { transform:rotate(-45deg) scale(1.18); }
+.pin-body span { transform:rotate(45deg); font-size:20px; }
+.pin-price {
+background:var(–surface); border:1.5px solid var(–border);
+border-radius:8px; padding:4px 10px; font-size:11px;
+font-weight:700; color:var(–orange); margin-top:6px;
+white-space:nowrap; opacity:0; transition:opacity .2s;
+box-shadow:var(–shadow);
+}
+.map-pin:hover .pin-price { opacity:1; }
+
+/* ─── GESTIONNAIRES / PROPRIETAIRES ─── */
+.owner-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:20px; }
+.owner-card {
+background:var(–surface); border:1.5px solid var(–border);
+border-radius:18px; padding:24px; transition:all .25s; cursor:pointer;
+display:flex; flex-direction:column; gap:16px; box-shadow:var(–shadow);
+}
+.owner-card:hover { border-color:rgba(232,112,26,0.35); transform:translateY(-4px); box-shadow:var(–shadow-lg); }
+.owner-top { display:flex; align-items:center; gap:14px; }
+.owner-avatar {
+width:58px; height:58px; border-radius:50%; flex-shrink:0;
+display:flex; align-items:center; justify-content:center;
+font-size:28px; font-weight:800; border:2px solid var(–border);
+}
+.owner-name { font-family:var(–font-head); font-size:17px; font-weight:700; color:var(–text); }
+.owner-title { font-size:12px; color:var(–text3); margin-top:2px; font-weight:500; }
+.owner-badge { font-size:11.5px; color:var(–green); font-weight:700; margin-top:3px; }
+.owner-bio { font-size:13px; color:var(–text2); line-height:1.65; }
+.owner-langs { display:flex; gap:6px; flex-wrap:wrap; }
+.lang-tag {
+padding:3px 10px; border-radius:6px; font-size:11.5px; font-weight:700;
+background:var(–orange-dim); color:var(–orange); border:1px solid rgba(232,112,26,0.25);
+}
+.owner-footer {
+display:flex; align-items:center; justify-content:space-between;
+padding-top:12px; border-top:1px solid var(–border);
+}
+.owner-stat { font-size:12px; color:var(–text3); }
+.owner-stat strong { color:var(–text); font-weight:700; }
+.owner-response { font-size:12px; color:var(–green); font-weight:600; }
+
+/* ─── PRICING ─── */
+.pricing-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(290px,1fr)); gap:22px; }
+.price-card {
+background:var(–surface); border:1.5px solid var(–border);
+border-radius:22px; padding:34px 30px; position:relative;
+transition:all .25s; box-shadow:var(–shadow);
+}
+.price-card:hover { transform:translateY(-5px); box-shadow:var(–shadow-lg); }
+.price-card.featured {
+border-color:var(–orange);
+background:linear-gradient(160deg, var(–surface), rgba(232,112,26,0.04));
+}
+.price-pop {
+position:absolute; top:-14px; left:50%; transform:translateX(-50%);
+background:var(–orange); color:#fff; font-size:11.5px; font-weight:800;
+padding:5px 18px; border-radius:100px; letter-spacing:.5px; white-space:nowrap;
+box-shadow:0 4px 16px rgba(232,112,26,0.4);
+}
+.price-name { font-family:var(–font-head); font-size:14px; font-weight:700; color:var(–text3); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
+.price-amount { font-family:var(–font-head); font-size:44px; font-weight:800; color:var(–text); letter-spacing:-2px; line-height:1; }
+.price-amount sup { font-size:20px; vertical-align:top; margin-top:10px; display:inline-block; color:var(–text3); font-family:var(–font-body); }
+.price-per { font-size:13px; color:var(–text3); margin-top:5px; margin-bottom:26px; font-weight:500; }
+.price-features { list-style:none; display:flex; flex-direction:column; gap:11px; margin-bottom:30px; }
+.price-features li { display:flex; align-items:center; gap:10px; font-size:14px; color:var(–text2); }
+.price-features li::before { content:‘✓’; color:var(–green); font-weight:800; font-size:13px; flex-shrink:0; }
+.price-features li.no { color:var(–text3); }
+.price-features li.no::before { content:‘✕’; color:var(–border2); }
+.btn-price {
+width:100%; padding:14px; border-radius:13px;
+font-family:var(–font-body); font-size:14.5px; font-weight:700;
+cursor:pointer; transition:all .2s;
+border:1.5px solid var(–border); background:var(–bg2); color:var(–text);
+}
+.btn-price:hover { border-color:var(–orange); color:var(–orange); background:var(–orange-dim); }
+.price-card.featured .btn-price {
+background:var(–orange); color:#fff; border-color:var(–orange);
+box-shadow:0 4px 16px rgba(232,112,26,0.35);
+}
+.price-card.featured .btn-price:hover { background:var(–orange2); }
+
+/* ─── MODAL ─── */
+.modal-overlay {
+position:fixed; inset:0; z-index:200;
+background:rgba(26,20,10,0.75); backdrop-filter:blur(10px);
+display:flex; align-items:center; justify-content:center;
+padding:20px; opacity:0; pointer-events:none; transition:opacity .3s;
+}
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal {
+background:var(–surface); border:1.5px solid var(–border);
+border-radius:24px; width:100%; max-width:960px;
+max-height:92vh; overflow-y:auto;
+transform:translateY(40px) scale(.96); transition:transform .35s;
+position:relative; box-shadow:0 30px 100px rgba(26,20,10,0.25);
+}
+.modal-overlay.open .modal { transform:none; }
+.modal-close {
+position:absolute; top:18px; right:18px; z-index:2;
+width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,0.9);
+border:1.5px solid var(–border); cursor:pointer;
+display:flex; align-items:center; justify-content:center;
+font-size:18px; color:var(–text2); transition:all .2s;
+box-shadow:var(–shadow);
+}
+.modal-close:hover { border-color:var(–orange); color:var(–orange); }
+
+.modal-img-zone {
+height:300px; position:relative; border-radius:24px 24px 0 0; overflow:hidden;
+background:linear-gradient(135deg, var(–bg2), var(–bg3));
+display:flex; align-items:center; justify-content:center; font-size:100px;
+}
+.modal-img-overlay {
+position:absolute; inset:0;
+background:linear-gradient(to top, rgba(255,255,255,1) 0%, transparent 55%);
+}
+.modal-img-info {
+position:absolute; bottom:22px; left:30px; right:80px;
+}
+.modal-img-info h2 {
+font-family:var(–font-head); font-size:28px; font-weight:800;
+color:var(–text); letter-spacing:-.5px;
+}
+.modal-img-info p { font-size:14px; color:var(–text2); margin-top:5px; font-weight:500; }
+
+.modal-body { padding:28px 30px; display:grid; grid-template-columns:1fr 330px; gap:30px; }
+.modal-left { display:flex; flex-direction:column; gap:26px; }
+.info-block h4 {
+font-family:var(–font-head); font-size:13px; font-weight:700;
+color:var(–text3); text-transform:uppercase; letter-spacing:1px; margin-bottom:14px;
+}
+.amenity-full { display:flex; gap:10px; flex-wrap:wrap; }
+.amenity-item {
+display:flex; align-items:center; gap:6px;
+padding:7px 14px; background:var(–surface2); border:1px solid var(–border);
+border-radius:10px; font-size:13px; color:var(–text2); font-weight:500;
+}
+.gallery-mini { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.gallery-thumb {
+aspect-ratio:1; border-radius:10px; background:var(–bg2);
+display:flex; align-items:center; justify-content:center; font-size:28px;
+border:1px solid var(–border); cursor:pointer; transition:all .2s;
+}
+.gallery-thumb:hover { border-color:var(–orange); transform:scale(1.04); }
+
+/* ─── BOOKING PANEL ─── */
+.booking-panel {
+background:var(–surface2); border:1.5px solid var(–border);
+border-radius:20px; padding:24px; height:fit-content;
+position:sticky; top:20px; box-shadow:var(–shadow);
+}
+.booking-panel h3 { font-family:var(–font-head); font-size:20px; font-weight:800; color:var(–text); margin-bottom:5px; }
+.booking-price-line { font-size:14px; color:var(–text2); margin-bottom:22px; }
+.booking-price-line strong { font-size:24px; color:var(–orange); font-family:var(–font-head); }
+
+.form-group { margin-bottom:16px; }
+.form-group label {
+font-size:11px; font-weight:700; color:var(–text3);
+text-transform:uppercase; letter-spacing:.6px; display:block; margin-bottom:7px;
+}
+.form-group input, .form-group select {
+width:100%; padding:11px 15px;
+background:var(–surface); border:1.5px solid var(–border);
+border-radius:11px; font-family:var(–font-body); font-size:14px; color:var(–text);
+outline:none; transition:border-color .2s;
+}
+.form-group input:focus, .form-group select:focus { border-color:var(–orange); }
+
+.calendar-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-bottom:16px; }
+.cal-day {
+aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+border-radius:9px; font-size:12px; cursor:pointer; transition:all .15s; font-weight:500;
+}
+.cal-day.header { color:var(–text3); font-size:10px; font-weight:700; cursor:default; }
+.cal-day.empty { pointer-events:none; }
+.cal-day.available { color:var(–text2); }
+.cal-day.available:hover { background:var(–orange-dim); color:var(–orange); }
+.cal-day.selected { background:var(–orange); color:#fff; font-weight:700; border-radius:9px; }
+.cal-day.booked { color:var(–border2); text-decoration:line-through; cursor:not-allowed; }
+.cal-day.today { border:1.5px solid var(–orange); color:var(–orange); }
+.cal-nav {
+display:flex; align-items:center; justify-content:space-between;
+margin-bottom:10px; font-family:var(–font-head); font-size:14px; font-weight:700; color:var(–text);
+}
+.cal-nav button {
+background:var(–surface); border:1px solid var(–border); border-radius:8px;
+width:28px; height:28px; cursor:pointer; font-size:14px; color:var(–text2);
+display:flex; align-items:center; justify-content:center; transition:all .2s;
+}
+.cal-nav button:hover { border-color:var(–orange); color:var(–orange); }
+
+.booking-summary { background:var(–surface); border-radius:12px; padding:16px; margin-bottom:18px; border:1px solid var(–border); }
+.summary-row { display:flex; justify-content:space-between; align-items:center; font-size:13.5px; margin-bottom:9px; color:var(–text2); }
+.summary-row:last-child { margin:0; padding-top:12px; border-top:1px solid var(–border); font-weight:800; color:var(–text); font-size:15px; }
+
+.btn-reserve {
+width:100%; padding:15px; background:var(–orange); border:none;
+border-radius:13px; font-family:var(–font-head); font-size:16px;
+font-weight:700; color:#fff; cursor:pointer; transition:all .2s;
+box-shadow:0 4px 20px rgba(232,112,26,0.4);
+}
+.btn-reserve:hover { background:var(–orange2); transform:translateY(-2px); box-shadow:0 8px 30px rgba(232,112,26,0.5); }
+.secure-note { text-align:center; font-size:11.5px; color:var(–text3); margin-top:10px; display:flex; align-items:center; justify-content:center; gap:5px; }
+
+/* ─── AD BANNER ─── */
+.ad-banner {
+margin:0 44px 0; padding:16px 26px;
+background:linear-gradient(135deg, rgba(26,122,60,0.07), rgba(196,154,46,0.06));
+border:1.5px solid rgba(26,122,60,0.2); border-radius:14px;
+display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+font-size:14px; color:var(–text2);
+}
+.ad-banner strong { color:var(–green); }
+.ad-tag {
+font-size:10px; font-weight:800; letter-spacing:1px; color:var(–text3);
+background:var(–surface); border:1px solid var(–border);
+padding:3px 9px; border-radius:5px; text-transform:uppercase; flex-shrink:0;
+}
+.ad-cta {
+padding:8px 18px; background:var(–green); border:none; border-radius:9px;
+font-family:var(–font-body); font-size:13px; font-weight:700;
+color:#fff; cursor:pointer; transition:all .2s; white-space:nowrap; margin-left:auto;
+}
+.ad-cta:hover { background:var(–green2); }
+
+/* ─── PARTENAIRES ─── */
+.partner-bar {
+background:var(–surface); border-top:1px solid var(–border); border-bottom:1px solid var(–border);
+padding:36px 44px;
+}
+.partner-label { text-align:center; font-size:11.5px; font-weight:700; color:var(–text3); text-transform:uppercase; letter-spacing:2px; margin-bottom:28px; }
+.partner-logos { display:flex; align-items:center; justify-content:center; gap:44px; flex-wrap:wrap; }
+.partner-logo {
+font-family:var(–font-head); font-size:17px; font-weight:800;
+color:var(–text3); opacity:.45; transition:all .2s; cursor:pointer; letter-spacing:-.5px;
+}
+.partner-logo:hover { opacity:1; color:var(–orange); }
+
+/* ─── SPONSORED ─── */
+.sponsored-label {
+font-size:10.5px; font-weight:700; letter-spacing:1px; color:var(–text3);
+text-transform:uppercase; margin-bottom:14px;
+display:flex; align-items:center; gap:10px;
+}
+.sponsored-label::after { content:’’; flex:1; height:1px; background:var(–border); }
+.sponsored-card {
+background:linear-gradient(135deg, var(–surface), rgba(26,122,60,0.04));
+border:1.5px solid rgba(26,122,60,0.2);
+border-radius:16px; padding:18px; display:flex; align-items:center;
+gap:18px; cursor:pointer; transition:all .22s; margin-bottom:14px;
+box-shadow:var(–shadow);
+}
+.sponsored-card:hover { border-color:rgba(26,122,60,0.4); transform:translateX(5px); }
+.sponsored-icon { width:52px; height:52px; border-radius:12px; background:var(–surface2); display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0; }
+.sponsored-content { flex:1; min-width:0; }
+.sponsored-name { font-weight:700; color:var(–text); font-size:14.5px; font-family:var(–font-head); }
+.sponsored-desc { font-size:12.5px; color:var(–text2); margin-top:3px; line-height:1.5; }
+.sponsored-cta { font-size:12px; font-weight:700; color:var(–green); margin-top:5px; }
+.sponsor-tag { font-size:10px; color:var(–text3); background:var(–surface2); padding:2px 9px; border-radius:5px; border:1px solid var(–border); flex-shrink:0; }
+
+/* ─── REVENU DASHBOARD ─── */
+.rev-bg { background:var(–surface); border-top:1.5px solid var(–border); border-bottom:1.5px solid var(–border); }
+.revenue-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-bottom:32px; }
+.rev-card {
+background:var(–bg2); border:1.5px solid var(–border); border-radius:16px; padding:22px;
+}
+.rev-label { font-size:11px; color:var(–text3); text-transform:uppercase; letter-spacing:.6px; font-weight:700; margin-bottom:8px; }
+.rev-val { font-family:var(–font-head); font-size:30px; font-weight:800; color:var(–text); }
+.rev-change { font-size:12px; margin-top:5px; font-weight:600; }
+.rev-change.up { color:var(–green); }
+.rev-change.down { color:var(–red); }
+.revenue-streams { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+.stream-card { background:var(–bg2); border:1.5px solid var(–border); border-radius:18px; padding:26px; }
+.stream-card h4 { font-family:var(–font-head); font-size:17px; font-weight:800; color:var(–text); margin-bottom:18px; }
+.stream-item { display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+.stream-icon { width:40px; height:40px; border-radius:10px; background:var(–surface); border:1px solid var(–border); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+.stream-details { flex:1; }
+.stream-name { font-size:13.5px; font-weight:700; color:var(–text); }
+.stream-desc { font-size:11.5px; color:var(–text3); margin-top:2px; }
+.stream-bar-wrap { background:var(–surface); border-radius:4px; height:4px; margin-top:6px; }
+.stream-bar { height:4px; border-radius:4px; background:var(–orange); }
+.stream-pct { font-family:var(–font-head); font-size:16px; font-weight:800; color:var(–orange); flex-shrink:0; }
+
+/* ─── TOAST ─── */
+.toast {
+position:fixed; bottom:28px; right:28px; z-index:300;
+background:var(–surface); border:1.5px solid var(–border);
+border-radius:14px; padding:16px 22px;
+display:flex; align-items:center; gap:12px;
+font-size:14px; color:var(–text); box-shadow:var(–shadow-lg);
+transform:translateY(110px); opacity:0; transition:all .35s;
+max-width:350px;
+}
+.toast.show { transform:none; opacity:1; }
+.toast-icon { font-size:22px; }
+
+/* ─── NAV TABS ─── */
+.nav-tabs { display:flex; gap:4px; margin-bottom:34px; border-bottom:1.5px solid var(–border); }
+.nav-tab { padding:11px 20px; font-size:14px; font-weight:700; color:var(–text3); cursor:pointer; border-bottom:2.5px solid transparent; margin-bottom:-1.5px; transition:all .2s; }
+.nav-tab.active { color:var(–orange); border-bottom-color:var(–orange); }
+.nav-tab:hover { color:var(–text2); }
+
+/* ─── TÉMOIGNAGES ─── */
+.temoignage-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:20px; }
+.temoignage-card {
+background:var(–surface); border:1.5px solid var(–border);
+border-radius:18px; padding:24px; box-shadow:var(–shadow);
+}
+.tem-stars { color:var(–orange); font-size:14px; margin-bottom:10px; }
+.tem-text { font-size:14px; color:var(–text2); line-height:1.7; font-style:italic; margin-bottom:16px; }
+.tem-author { display:flex; align-items:center; gap:10px; }
+.tem-avatar { width:42px; height:42px; border-radius:50%; background:var(–bg2); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; border:2px solid var(–border); }
+.tem-name { font-weight:700; font-size:13.5px; color:var(–text); font-family:var(–font-head); }
+.tem-info { font-size:12px; color:var(–text3); margin-top:2px; }
+
+/* ─── FOOTER ─── */
+footer {
+background:var(–text); padding:60px 44px 28px;
+}
+.footer-grid { display:grid; grid-template-columns:2.2fr 1fr 1fr 1fr; gap:44px; margin-bottom:44px; }
+.footer-brand { }
+.footer-logo { font-family:var(–font-head); font-size:22px; font-weight:800; color:#fff; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.footer-logo em { font-style:normal; color:var(–orange); }
+.footer-brand p { font-size:13.5px; color:rgba(255,255,255,0.45); line-height:1.75; max-width:290px; }
+.footer-col h5 { font-family:var(–font-head); font-size:12px; font-weight:700; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:16px; }
+.footer-col a { display:block; font-size:14px; color:rgba(255,255,255,0.55); margin-bottom:10px; cursor:pointer; transition:color .2s; text-decoration:none; }
+.footer-col a:hover { color:var(–orange); }
+.footer-bottom { padding-top:24px; border-top:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:space-between; }
+.footer-bottom p { font-size:12.5px; color:rgba(255,255,255,0.3); }
+.footer-flag { display:flex; gap:3px; }
+.footer-flag span { width:10px; height:24px; border-radius:2px; }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width:900px) {
+header { padding:0 20px; }
+nav { display:none; }
+.hero { padding:110px 20px 60px; }
+section { padding:50px 20px; }
+.map-section, .villes-section, .ad-banner { margin:0 20px 0; padding:0 0 50px; }
+.ad-banner { margin:0 20px; }
+.partner-bar { padding:30px 20px; }
+.residence-grid { grid-template-columns:1fr; }
+.modal-body { grid-template-columns:1fr; }
+.footer-grid { grid-template-columns:1fr 1fr; gap:28px; }
+.revenue-grid { grid-template-columns:1fr 1fr; }
+.revenue-streams { grid-template-columns:1fr; }
+.hero-stats { gap:24px; flex-wrap:wrap; justify-content:center; }
+}
+</style>
+
+</head>
+<body>
+
+<!-- HEADER -->
+
+<header>
+  <div class="logo" onclick="showSection('home')">
+    <div class="logo-flag">
+      <div class="flag-stripe" style="background:#F77F00;"></div>
+      <div class="flag-stripe" style="background:#fff; border:1px solid #eee;"></div>
+      <div class="flag-stripe" style="background:#009A00;"></div>
+    </div>
+    Ivoire<em>Stay</em>
+  </div>
+  <nav>
+    <a onclick="showSection('residences')">Résidences</a>
+    <a onclick="showSection('proprietaires')">Propriétaires</a>
+    <a onclick="showSection('pricing')">Abonnements</a>
+    <a onclick="showSection('monetisation')">Revenus</a>
+  </nav>
+  <div class="header-actions">
+    <button class="btn-outline" onclick="showToast('👋','Bienvenue sur IvoireStay !')">Se connecter</button>
+    <button class="btn-primary" onclick="showToast('🏠','Publiez votre résidence gratuitement !')">Publier ma résidence</button>
+  </div>
+</header>
+
+<!-- ══ HOME ══ -->
+
+<div id="section-home">
+
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-pattern"></div>
+
+  <div class="hero-badge">🇨🇮 &nbsp;+3 200 résidences meublées référencées en Côte d'Ivoire</div>
+
+  <h1>Trouvez votre <em>résidence</em><br>meublée en <span class="vert">Côte d'Ivoire</span></h1>
+
+  <p class="hero-sub">Abidjan, Yamoussoukro, Bouaké et partout en CI. Résidences meublées pour courts et longs séjours, réservation instantanée et paiement sécurisé.</p>
+
+  <div class="search-wrap">
+    <div class="search-bar">
+      <div class="search-field">
+        <label>Ville ou quartier</label>
+        <input type="text" placeholder="Cocody, Plateau, Marcory…" id="searchCity">
+      </div>
+      <div class="search-divider"></div>
+      <div class="search-field">
+        <label>Type de logement</label>
+        <select>
+          <option>Studio meublé</option>
+          <option>Appartement 1 chambre</option>
+          <option>Appartement 2 chambres</option>
+          <option>Villa meublée</option>
+          <option>Chambre en résidence</option>
+          <option>Duplex meublé</option>
+        </select>
+      </div>
+      <div class="search-divider"></div>
+      <div class="search-field">
+        <label>Budget mensuel</label>
+        <select>
+          <option>Tous budgets</option>
+          <option>Moins de 100 000 FCFA</option>
+          <option>100 000 – 300 000 FCFA</option>
+          <option>300 000 – 600 000 FCFA</option>
+          <option>600 000 FCFA et +</option>
+        </select>
+      </div>
+      <button class="btn-search" onclick="showSection('residences')">🔍 Rechercher</button>
+    </div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat"><strong>3 248</strong><span>Résidences actives</span></div>
+    <div class="stat-sep"></div>
+    <div class="stat"><strong>12 400+</strong><span>Réservations / mois</span></div>
+    <div class="stat-sep"></div>
+    <div class="stat"><strong>4.7 ★</strong><span>Note moyenne</span></div>
+    <div class="stat-sep"></div>
+    <div class="stat"><strong>18 villes</strong><span>Couvertes en CI</span></div>
+  </div>
+</div>
+
+<!-- AD BANNER -->
+
+<div class="ad-banner">
+  <span class="ad-tag">Sponsorisé</span>
+  <span>🏦 <strong>SGBCI — Crédit Immobilier :</strong> Financez votre résidence en Côte d'Ivoire. Taux préférentiel partenaire IvoireStay · Réponse sous 48h</span>
+  <button class="ad-cta" onclick="showToast('🏦','Redirection vers SGBCI...')">En savoir plus</button>
+</div>
+
+<!-- VILLES -->
+
+<div class="villes-section">
+  <div class="section-head">
+    <div>
+      <h2>Explorer par ville</h2>
+      <p>Résidences disponibles dans toute la Côte d'Ivoire</p>
+    </div>
+  </div>
+  <div class="villes-grid">
+    <div class="ville-card" onclick="showSection('residences')"><span class="ville-emoji">🌊</span><div class="ville-name">Abidjan</div><div class="ville-count">1 840 résidences</div></div>
+    <div class="ville-card" onclick="showSection('residences')"><span class="ville-emoji">🏛</span><div class="ville-name">Yamoussoukro</div><div class="ville-count">214 résidences</div></div>
+    <div class="ville-card" onclick="showSection('residences')"><span class="ville-emoji">🌿</span><div class="ville-name">Bouaké</div><div class="ville-count">187 résidences</div></div>
+    <div class="ville-card" onclick="showSection('residences')"><span class="ville-emoji">🌴</span><div class="ville-name">San-Pédro</div><div class="ville-count">98 résidences</div></div>
+    <div class="ville-card" onclick="showSection('residences')"><span class="ville-emoji">☀️</span><div class="ville-name">Daloa</div><div class="ville-count">76 résidences</div></div>
+    <div class="ville-card" onclick="showSection('residences')"><span class="ville-emoji">🎋</span><div class="ville-name">Man</div><div class="ville-count">54 résidences</div></div>
+    <div class="ville-card" onclick="showSection('residences')"><span class="ville-emoji">🏜</span><div class="ville-name">Korhogo</div><div class="ville-count">48 résidences</div></div>
+    <div class="ville-card" onclick="showSection('residences')"><span class="ville-emoji">🌸</span><div class="ville-name">Gagnoa</div><div class="ville-count">41 résidences</div></div>
+  </div>
+</div>
+
+<!-- PARTENAIRES -->
+
+<div class="partner-bar" style="margin-top:60px;">
+  <div class="partner-label">Partenaires & sponsors officiels</div>
+  <div class="partner-logos">
+    <span class="partner-logo" onclick="showToast('🏦','SGBCI Partenaire')">SGBCI</span>
+    <span class="partner-logo" onclick="showToast('📱','MTN CI')">MTN CI</span>
+    <span class="partner-logo" onclick="showToast('📡','Orange CI')">Orange CI</span>
+    <span class="partner-logo" onclick="showToast('🏠','Eiffage CI')">Eiffage CI</span>
+    <span class="partner-logo" onclick="showToast('💡','CIE')">CIE</span>
+    <span class="partner-logo" onclick="showToast('💧','SODECI')">SODECI</span>
+    <span class="partner-logo" onclick="showToast('🛡','AXA')">AXA CI</span>
+    <span class="partner-logo" onclick="showToast('✈️','Air Côte d\'Ivoire')">Air CI</span>
+  </div>
+</div>
+
+<!-- TEMOIGNAGES -->
+
+<section>
+  <div class="section-head">
+    <div><h2>Ce que disent nos clients</h2><p>Des milliers de locataires et propriétaires satisfaits</p></div>
+  </div>
+  <div class="temoignage-grid">
+    <div class="temoignage-card">
+      <div class="tem-stars">★★★★★</div>
+      <div class="tem-text">« J'ai trouvé mon appartement à Cocody en moins de 2 heures. Tout était meublé, climatisé, WiFi inclus. IvoireStay est la meilleure plateforme en Côte d'Ivoire ! »</div>
+      <div class="tem-author"><div class="tem-avatar">👤</div><div><div class="tem-name">Kouassi Aimé</div><div class="tem-info">Ingénieur · Abidjan</div></div></div>
+    </div>
+    <div class="temoignage-card">
+      <div class="tem-stars">★★★★★</div>
+      <div class="tem-text">« En tant que propriétaire, j'ai loué mes 3 appartements en moins d'une semaine. La plateforme gère tout : paiement, contrats, calendrier. Je recommande ! »</div>
+      <div class="tem-author"><div class="tem-avatar">👩</div><div><div class="tem-name">Marie-Claire Bah</div><div class="tem-info">Propriétaire · Cocody</div></div></div>
+    </div>
+    <div class="temoignage-card">
+      <div class="tem-stars">★★★★☆</div>
+      <div class="tem-text">« Venu en mission professionnelle à Abidjan, j'ai trouvé une belle villa meublée au Plateau. Confort 5 étoiles, paiement en ligne, aucun souci. »</div>
+      <div class="tem-author"><div class="tem-avatar">🧑</div><div><div class="tem-name">Jean-Paul Mbeki</div><div class="tem-info">Consultant · Cameroun</div></div></div>
+    </div>
+  </div>
+</section>
+
+</div><!-- end home -->
+
+<!-- ══ RESIDENCES ══ -->
+
+<div id="section-residences" style="display:none;">
+<section>
+  <div class="section-head">
+    <div><h2>Résidences disponibles</h2><p>Toutes les résidences meublées en Côte d'Ivoire</p></div>
+    <button class="see-all" onclick="showSection('home')">← Accueil</button>
+  </div>
+
+  <div class="filters">
+    <div class="filter-chip active" onclick="toggleFilter(this)">Tous</div>
+    <div class="filter-chip" onclick="toggleFilter(this)">🏙 Abidjan</div>
+    <div class="filter-chip" onclick="toggleFilter(this)">🛏 Studio</div>
+    <div class="filter-chip" onclick="toggleFilter(this)">🏢 Appartement</div>
+    <div class="filter-chip" onclick="toggleFilter(this)">🏡 Villa</div>
+    <div class="filter-chip" onclick="toggleFilter(this)">⭐ Top noté</div>
+    <div class="filter-chip" onclick="toggleFilter(this)">💰 Moins de 200k</div>
+    <div class="filter-chip" onclick="toggleFilter(this)">🌐 WiFi inclus</div>
+    <div class="filter-chip" onclick="toggleFilter(this)">❄️ Climatisé</div>
+  </div>
+
+  <div class="sponsored-label">Annonces mises en avant</div>
+  <div class="sponsored-card" onclick="openResidence(0)">
+    <div class="sponsored-icon">🏆</div>
+    <div class="sponsored-content">
+      <div class="sponsored-name">Résidence Prestige Cocody — 2 ch. meublées, piscine, gardien 24h</div>
+      <div class="sponsored-desc">Cocody Ambassades · Climatisé · WiFi Fibre · Parking sécurisé · Disponible immédiatement</div>
+      <div class="sponsored-cta">Réserver maintenant →</div>
+    </div>
+    <span class="sponsor-tag">Sponsorisé</span>
+  </div>
+
+  <div class="residence-grid" id="residenceGrid"></div>
+</section>
+
+<div class="map-section">
+  <div class="section-head">
+    <div><h2>Carte des résidences</h2><p>Localisez les résidences autour de vous en CI</p></div>
+  </div>
+  <div class="map-wrap">
+    <div class="map-bg"></div>
+    <div class="map-ci-outline">🇨🇮</div>
+    <div class="map-pins" id="mapPins"></div>
+    <div class="map-center" id="mapCenter">
+      <h3>📍 Carte interactive Côte d'Ivoire</h3>
+      <p>Activez votre géolocalisation pour voir<br>les résidences autour de vous</p>
+      <button class="btn-primary" onclick="activateGeo()">📍 Activer ma position</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ PROPRIETAIRES ══ -->
+
+<div id="section-proprietaires" style="display:none;">
+<section>
+  <div class="section-head">
+    <div><h2>Propriétaires & Gestionnaires</h2><p>Des professionnels vérifiés pour vous accompagner</p></div>
+    <button class="see-all" onclick="showSection('home')">← Accueil</button>
+  </div>
+  <div class="owner-grid" id="ownerGrid"></div>
+</section>
+</div>
+
+<!-- ══ PRICING ══ -->
+
+<div id="section-pricing" style="display:none;">
+<section>
+  <div class="section-head">
+    <div><h2>Abonnements & Tarifs</h2><p>Des formules adaptées à chaque besoin</p></div>
+    <button class="see-all" onclick="showSection('home')">← Accueil</button>
+  </div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="switchTab(this,'tab-proprio')">🏠 Propriétaires</div>
+    <div class="nav-tab" onclick="switchTab(this,'tab-locataire')">🙋 Locataires</div>
+    <div class="nav-tab" onclick="switchTab(this,'tab-annonceur')">📢 Annonceurs publicitaires</div>
+  </div>
+  <div id="tab-proprio"><div class="pricing-grid" id="pgProprio"></div></div>
+  <div id="tab-locataire" style="display:none;"><div class="pricing-grid" id="pgLocataire"></div></div>
+  <div id="tab-annonceur" style="display:none;"><div class="pricing-grid" id="pgAnnonceur"></div></div>
+</section>
+</div>
+
+<!-- ══ MONETISATION ══ -->
+
+<div id="section-monetisation" style="display:none;">
+<div class="rev-bg">
+<section>
+  <div class="section-head">
+    <div><h2>💰 Dashboard de Monétisation</h2><p>Vos sources de revenus IvoireStay — mois en cours</p></div>
+    <button class="see-all" onclick="showSection('home')">← Accueil</button>
+  </div>
+  <div class="revenue-grid">
+    <div class="rev-card"><div class="rev-label">Commissions réservations</div><div class="rev-val">8,4M FCFA</div><div class="rev-change up">↑ +22% vs mois dernier</div></div>
+    <div class="rev-card"><div class="rev-label">Revenus publicitaires</div><div class="rev-val">2,9M FCFA</div><div class="rev-change up">↑ +41% vs mois dernier</div></div>
+    <div class="rev-card"><div class="rev-label">Abonnements propriétaires</div><div class="rev-val">4,1M FCFA</div><div class="rev-change up">↑ +15% vs mois dernier</div></div>
+    <div class="rev-card"><div class="rev-label">Total estimé / mois</div><div class="rev-val">15,4M FCFA</div><div class="rev-change up">↑ +26% de croissance</div></div>
+  </div>
+  <div class="revenue-streams">
+    <div class="stream-card">
+      <h4>📊 Sources de revenus</h4>
+      <div class="stream-item">
+        <div class="stream-icon">💳</div>
+        <div class="stream-details">
+          <div class="stream-name">Commission sur réservations (10%)</div>
+          <div class="stream-desc">Prélevée automatiquement à chaque paiement</div>
+          <div class="stream-bar-wrap"><div class="stream-bar" style="width:55%"></div></div>
+        </div>
+        <div class="stream-pct">55%</div>
+      </div>
+      <div class="stream-item">
+        <div class="stream-icon">📢</div>
+        <div class="stream-details">
+          <div class="stream-name">Publicité & sponsoring (CPM/CPC)</div>
+          <div class="stream-desc">Bannières, annonces boostées, emailings</div>
+          <div class="stream-bar-wrap"><div class="stream-bar" style="width:19%"></div></div>
+        </div>
+        <div class="stream-pct">19%</div>
+      </div>
+      <div class="stream-item">
+        <div class="stream-icon">⭐</div>
+        <div class="stream-details">
+          <div class="stream-name">Abonnements Premium Propriétaires</div>
+          <div class="stream-desc">Visibilité accrue, analytics, badge vérifié</div>
+          <div class="stream-bar-wrap"><div class="stream-bar" style="width:26%"></div></div>
+        </div>
+        <div class="stream-pct">26%</div>
+      </div>
+    </div>
+    <div class="stream-card">
+      <h4>🤝 Partenariats actifs</h4>
+      <div class="stream-item">
+        <div class="stream-icon">🏦</div>
+        <div class="stream-details">
+          <div class="stream-name">SGBCI — Crédit immobilier</div>
+          <div class="stream-desc">Lead sponsorisé · 5 000 FCFA / lead qualifié</div>
+          <div class="stream-bar-wrap"><div class="stream-bar" style="width:38%"></div></div>
+        </div>
+        <div class="stream-pct">580k</div>
+      </div>
+      <div class="stream-item">
+        <div class="stream-icon">📱</div>
+        <div class="stream-details">
+          <div class="stream-name">MTN CI — Paiement MoMo</div>
+          <div class="stream-desc">Revenu partagé sur transactions Mobile Money</div>
+          <div class="stream-bar-wrap"><div class="stream-bar" style="width:28%"></div></div>
+        </div>
+        <div class="stream-pct">420k</div>
+      </div>
+      <div class="stream-item">
+        <div class="stream-icon">🛡</div>
+        <div class="stream-details">
+          <div class="stream-name">AXA CI — Assurance logement</div>
+          <div class="stream-desc">Affiliation · 3% par contrat souscrit</div>
+          <div class="stream-bar-wrap"><div class="stream-bar" style="width:22%"></div></div>
+        </div>
+        <div class="stream-pct">310k</div>
+      </div>
+      <div class="stream-item">
+        <div class="stream-icon">📡</div>
+        <div class="stream-details">
+          <div class="stream-name">Orange CI — Forfait internet</div>
+          <div class="stream-desc">Bundle WiFi vendu aux résidences partenaires</div>
+          <div class="stream-bar-wrap"><div class="stream-bar" style="width:18%"></div></div>
+        </div>
+        <div class="stream-pct">265k</div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+</div>
+
+<!-- ══ MODAL RÉSIDENCE ══ -->
+
+<div class="modal-overlay" id="residenceModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-img-zone" id="modalImg">🏠</div>
+    <div style="position:relative;">
+      <div class="modal-img-overlay" style="position:absolute;top:-120px;left:0;right:0;height:120px;"></div>
+    </div>
+    <div style="padding:20px 30px 0; border-bottom:1px solid var(--border);">
+      <h2 id="modalName" style="font-family:var(--font-head);font-size:26px;font-weight:800;color:var(--text);letter-spacing:-.5px;"></h2>
+      <p id="modalLocation" style="font-size:14px;color:var(--text2);margin:5px 0 16px;font-weight:500;"></p>
+    </div>
+    <div class="modal-body">
+      <div class="modal-left">
+        <div class="info-block">
+          <h4>Description</h4>
+          <p id="modalDesc" style="font-size:14px;color:var(--text2);line-height:1.75;"></p>
+        </div>
+        <div class="info-block">
+          <h4>Équipements & services</h4>
+          <div class="amenity-full" id="modalAmenities"></div>
+        </div>
+        <div class="info-block">
+          <h4>Galerie photos</h4>
+          <div class="gallery-mini" id="modalGallery"></div>
+        </div>
+        <div class="info-block">
+          <h4>Propriétaire / Gestionnaire</h4>
+          <div id="modalOwner"></div>
+        </div>
+        <div class="info-block">
+          <h4>Avis locataires</h4>
+          <div id="modalReviews"></div>
+        </div>
+      </div>
+      <div>
+        <div class="booking-panel">
+          <h3>Réserver ce logement</h3>
+          <p class="booking-price-line">À partir de <strong id="modalPrice">150 000 FCFA</strong>/mois</p>
+          <div class="form-group">
+            <label>Date d'entrée</label>
+            <div class="cal-nav">
+              <button onclick="prevMonth()">‹</button>
+              <span id="calMonthLabel">Mars 2025</span>
+              <button onclick="nextMonth()">›</button>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+          </div>
+          <div class="form-group">
+            <label>Durée du séjour</label>
+            <select id="dureeSelect" onchange="updateSummary()">
+              <option value="1">1 mois</option>
+              <option value="2">2 mois</option>
+              <option value="3">3 mois</option>
+              <option value="6">6 mois</option>
+              <option value="12">1 an (meilleur tarif)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Nombre de personnes</label>
+            <select>
+              <option>1 personne</option>
+              <option>2 personnes</option>
+              <option>3 personnes</option>
+              <option>4+ personnes</option>
+            </select>
+          </div>
+          <div class="booking-summary" id="bookingSummary">
+            <div class="summary-row"><span>Loyer mensuel</span><span id="s-loyer">—</span></div>
+            <div class="summary-row"><span>Caution (1 mois)</span><span id="s-caution">—</span></div>
+            <div class="summary-row"><span>Frais de dossier (5%)</span><span id="s-frais">—</span></div>
+            <div class="summary-row"><span>Total à payer maintenant</span><span id="s-total">—</span></div>
+          </div>
+          <button class="btn-reserve" onclick="doReservation()">💳 Réserver & Payer</button>
+          <p style="text-align:center;font-size:11px;color:var(--text3);margin-top:8px;">📱 Paiement Mobile Money (MTN / Orange) · Carte bancaire</p>
+          <p class="secure-note">🔒 Paiement sécurisé · Remboursement 72h avant</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon">✅</span>
+  <span id="toastMsg">Message</span>
+</div>
+
+<!-- FOOTER -->
+
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="footer-logo">
+        🇨🇮 Ivoire<em>Stay</em>
+      </div>
+      <p>La première marketplace ivoirienne dédiée aux résidences meublées. Trouvez, comparez et réservez votre logement en Côte d'Ivoire en toute sécurité.</p>
+    </div>
+    <div class="footer-col">
+      <h5>Plateforme</h5>
+      <a onclick="showSection('residences')">Trouver un logement</a>
+      <a>Carte interactive</a>
+      <a onclick="showSection('proprietaires')">Propriétaires vérifiés</a>
+      <a>Avis & notations</a>
+      <a>Paiement Mobile Money</a>
+    </div>
+    <div class="footer-col">
+      <h5>Propriétaires</h5>
+      <a>Publier une annonce</a>
+      <a>Gestion du planning</a>
+      <a onclick="showSection('pricing')">Abonnements</a>
+      <a onclick="showSection('monetisation')">Analytics revenus</a>
+      <a>Support propriétaire</a>
+    </div>
+    <div class="footer-col">
+      <h5>Entreprise</h5>
+      <a>À propos d'IvoireStay</a>
+      <a onclick="showSection('monetisation')">Publicité & sponsors</a>
+      <a>Presse & médias</a>
+      <a>Mentions légales</a>
+      <a>📞 +225 07 XX XX XX</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 IvoireStay · Abidjan, Côte d'Ivoire · Tous droits réservés</p>
+    <div class="footer-flag">
+      <span style="background:#F77F00;"></span>
+      <span style="background:#fff; opacity:.3;"></span>
+      <span style="background:#009A00;"></span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ─── DATA ─────────────────────────────────────────────────────────────────
+const residences = [
+  {
+    name:"Appartement Prestige Cocody",
+    location:"Cocody Ambassades, Abidjan",
+    badge:"Coup de cœur",
+    desc:"Superbe appartement 3 pièces entièrement meublé dans un immeuble sécurisé. Cuisine équipée, salon climatisé, balcon avec vue. À 5 min des grandes surfaces.",
+    amenities:["❄️ Climatisation","📶 WiFi Fibre","🅿️ Parking","🔒 Gardien 24h","🛁 Baignoire","🍳 Cuisine équipée","🌊 Piscine","⚡ Groupe électrogène"],
+    rating:4.9, reviews:142, price:"350 000 FCFA", priceNum:350000, avail:true,
+    emoji:"🏙", type:"Appartement 3P",
+    owner:"Marie-Claire Bah",
+    galleryEmojis:["🛋","🛏","🍳","🛁"],
+    reviewList:[{user:"Yann K.",r:5,txt:"Logement impeccable, propriétaire très réactive."},{user:"Sophie D.",r:5,txt:"Parfait pour ma mission pro, tout était prêt à l'arrivée."}]
+  },
+  {
+    name:"Villa Meublée Plateau",
+    location:"Plateau Centre, Abidjan",
+    badge:"Premium",
+    desc:"Villa 4 chambres avec jardin privatif, idéale pour famille ou expatriés. Proche du Plateau commercial, école française à 800m. Sécurité 24/7.",
+    amenities:["❄️ Climatisation","📶 WiFi","🅿️ Grand parking","🔒 Vigil 24h","🌿 Jardin","🏊 Piscine","🍳 Cuisine pro","🚿 3 salles de bain"],
+    rating:4.8, reviews:89, price:"650 000 FCFA", priceNum:650000, avail:true,
+    emoji:"🏡", type:"Villa 4 chambres",
+    owner:"Koné Abdoulaye",
+    galleryEmojis:["🛋","🌿","🏊","🛏"],
+    reviewList:[{user:"Marc R.",r:5,txt:"Villa magnifique, jardin superbe, très calme."},{user:"Fatou D.",r:4,txt:"Parfait pour notre famille, reviendrions sans hésiter."}]
+  },
+  {
+    name:"Studio Meublé Marcory",
+    location:"Marcory Zone 4, Abidjan",
+    badge:null,
+    desc:"Studio moderne et fonctionnel, idéal pour jeunes professionnels ou étudiants. Entièrement équipé, accès internet inclus, proche transports.",
+    amenities:["❄️ Climatisation","📶 WiFi inclus","🍳 Kitchenette","📺 TV câble","🔒 Badge d'accès","🚿 Douche moderne"],
+    rating:4.5, reviews:61, price:"120 000 FCFA", priceNum:120000, avail:true,
+    emoji:"🛏", type:"Studio",
+    owner:"Adjoua Carine",
+    galleryEmojis:["🛏","🍳","📺","🚿"],
+    reviewList:[{user:"Djibril S.",r:5,txt:"Studio nickel, propre et bien équipé !"},{user:"Amina T.",r:4,txt:"Bon rapport qualité-prix, je recommande."}]
+  },
+  {
+    name:"Résidence Les Palmiers",
+    location:"Riviera 3, Abidjan",
+    badge:"Résidence sécurisée",
+    desc:"Complexe résidentiel haut de gamme avec 2 piscines, salle de sport, gardiennage 24h. Appartements 2 et 3 chambres disponibles.",
+    amenities:["❄️ Climatisation","📶 WiFi Fibre","🏊 2 piscines","💪 Salle de sport","🔒 Sécurité 24h","🅿️ Parking couvert","⚡ Groupe électrogène","🧺 Buanderie"],
+    rating:4.9, reviews:203, price:"420 000 FCFA", priceNum:420000, avail:true,
+    emoji:"🌴", type:"Appartement 2-3P",
+    owner:"SCI Les Palmiers",
+    galleryEmojis:["🏊","💪","🛋","🛏"],
+    reviewList:[{user:"Alex N.",r:5,txt:"La piscine est superbe, résidence très bien tenue."},{user:"Isabelle M.",r:5,txt:"Sécurité impeccable, tout le confort d'un hôtel."}]
+  },
+  {
+    name:"Appartement Yamoussoukro Centre",
+    location:"Centre-ville, Yamoussoukro",
+    badge:null,
+    desc:"Bel appartement meublé 2 chambres proche de la Basilique. Idéal pour visites ou missions longue durée. Calme, lumineux, connexion internet.",
+    amenities:["❄️ Climatisation","📶 WiFi","🍳 Cuisine équipée","📺 TV","🅿️ Parking","🔒 Sécurité"],
+    rating:4.6, reviews:34, price:"180 000 FCFA", priceNum:180000, avail:false,
+    emoji:"🏛", type:"Appartement 2P",
+    owner:"Pierre Aka",
+    galleryEmojis:["🛋","🛏","🍳","🏛"],
+    reviewList:[{user:"Roger F.",r:5,txt:"Bien situé, appartement propre et confortable."},{user:"Awa B.",r:4,txt:"Bon séjour, propriétaire disponible et sympa."}]
+  },
+  {
+    name:"Villa Bord de Mer San-Pédro",
+    location:"Bord de mer, San-Pédro",
+    badge:"Vue mer",
+    desc:"Splendide villa face à l'Atlantique. 3 chambres avec terrasse panoramique, accès direct plage privée. Idéale pour vacances ou séjour d'affaires.",
+    amenities:["🌊 Vue mer","🏖 Plage privée","❄️ Climatisation","📶 WiFi","🍳 Cuisine","🌿 Jardin tropical","🅿️ Parking","☀️ Terrasse"],
+    rating:5.0, reviews:47, price:"500 000 FCFA", priceNum:500000, avail:true,
+    emoji:"🌊", type:"Villa 3 chambres",
+    owner:"Jean-Baptiste N'Guessan",
+    galleryEmojis:["🌊","🏖","🌿","☀️"],
+    reviewList:[{user:"Claire M.",r:5,txt:"Vue mer à couper le souffle, villa de rêve !"},{user:"Éric P.",r:5,txt:"Plage privée, calme absolu, on reviendra !"}]
+  }
+];
+
+const owners = [
+  {name:"Marie-Claire Bah", title:"Propriétaire indépendante", bio:"Gère 4 appartements premium à Cocody et Riviera. Réponse rapide, très disponible. Accueille expatriés et professionnels en mission.", langs:["Français","Dioula","Anglais"], biens:"4 biens", rating:"4.9 ★", response:"Répond en < 1h", avatar:"👩", bg:"#fff3eb", badge:"✅ Identité vérifiée"},
+  {name:"Koné Abdoulaye", title:"Agence immobilière", bio:"Agence agréée FIMICI avec 12 ans d'expérience. Spécialiste des villas et grandes surfaces pour expatriés, familles et entreprises.", langs:["Français","Anglais","Bambara"], biens:"18 biens", rating:"4.8 ★", response:"Répond en < 2h", avatar:"🧑", bg:"#ebf5eb", badge:"✅ Agence certifiée"},
+  {name:"Adjoua Carine", title:"Propriétaire & gestionnaire", bio:"Studio et T2 bien entretenus à Marcory et Treichville. Prix accessibles, idéale pour étudiants et jeunes professionnels ivoiriens.", langs:["Français","Dioula","Baoulé"], biens:"6 biens", rating:"4.6 ★", response:"Répond en < 3h", avatar:"👩‍💼", bg:"#fff8eb", badge:"✅ Vérifié"},
+  {name:"SCI Les Palmiers", title:"Résidence & promoteur", bio:"Société immobilière gérant le complexe résidentiel Les Palmiers (Riviera 3). Services hôteliers inclus, contrats flexibles courts et longs séjours.", langs:["Français","Anglais"], biens:"32 biens", rating:"4.9 ★", response:"Répond en < 30min", avatar:"🏢", bg:"#ebf0ff", badge:"✅ Société vérifiée"},
+  {name:"Pierre Aka", title:"Propriétaire", bio:"Appartements à Yamoussoukro, idéaux pour fonctionnaires et visiteurs de la capitale politique. Tarifs abordables, cadre calme et sécurisé.", langs:["Français","Baoulé"], biens:"3 biens", rating:"4.6 ★", response:"Répond en < 4h", avatar:"👨", bg:"#f5ebff", badge:"✅ Vérifié"},
+  {name:"Jean-Baptiste N'Guessan", title:"Villa de prestige", bio:"Propriétaire de villas de standing à San-Pédro et Grand-Bassam. Spécialiste des séjours haut de gamme et locations vacances bord de mer.", langs:["Français","Anglais"], biens:"5 biens", rating:"4.9 ★", response:"Répond en < 1h", avatar:"🧔", bg:"#ebf8ff", badge:"✅ Premium vérifié"}
+];
+
+const pricingProprio = [
+  {name:"Gratuit", price:"0", per:"Pour démarrer", pop:false, features:["1 annonce active","5 photos","Calendrier basique","Réservation & paiement en ligne","Support email"], no:["Badge vérifié","Annonces boostées","Analytics","API partenaires","Gestionnaire dédié"]},
+  {name:"Pro", price:"15 000", per:"FCFA / mois", pop:true, features:["10 annonces actives","30 photos + vidéo","Planning avancé multi-logements","Badge propriétaire vérifié ✓","Analytics détaillés","Support prioritaire","Boost ×3 dans les résultats"], no:["API partenaires","Gestionnaire dédié"]},
+  {name:"Agence", price:"45 000", per:"FCFA / mois", pop:false, features:["Annonces illimitées","Photos & vidéos illimitées","Planning multi-biens","API & intégration","Badge agence certifiée ✓","Analytics temps réel","Gestionnaire dédié","Boost ×10","Accès partenariats publicitaires"]}
+];
+const pricingLocataire = [
+  {name:"Gratuit", price:"0", per:"Pour chercher", pop:false, features:["Recherche illimitée","Réservation basique","Paiement sécurisé Mobile Money","Historique 30 jours"], no:["Remises exclusives","Priorité nouveautés","Profil locataire public","Concierge"]},
+  {name:"Premium", price:"3 000", per:"FCFA / mois", pop:true, features:["Tout Gratuit","Remises -10% partenaires","Priorité nouvelles annonces","Profil locataire vérifié","Historique illimité","Support prioritaire"], no:["Concierge dédié"]},
+  {name:"Diaspora", price:"9 000", per:"FCFA / mois", pop:false, features:["Tout Premium","Remises -20%","Multi-profils famille","Concierge de relogement","Facturation consolidée","Paiement depuis l'étranger"]}
+];
+const pricingAnnonceur = [
+  {name:"Display CPM", price:"3 500", per:"FCFA / 1 000 impressions", pop:false, features:["Bannières header & footer","Ciblage géographique CI","400k+ impressions/mois","Rapport mensuel"], no:["Annonces boostées","Emailing","Contenu sponsorisé"]},
+  {name:"Partenaire", price:"120 000", per:"FCFA / mois", pop:true, features:["Annonce sponsorisée TOP","Emailing 60k abonnés","Badge partenaire","Article sponsorisé","Lien affilié intégré","Rapport ROI hebdomadaire","Accès analytics audiences"], no:[]},
+  {name:"Brand Premium", price:"350 000", per:"FCFA / mois", pop:false, features:["Header exclusif","Emailing illimité","Page marque dédiée","Contenu co-brandé","Présence événements CI","Account manager dédié","Full analytics temps réel"]}
+];
+
+const mapPins = [
+  {left:"42%",top:"55%",label:"Abidjan — 1840 rés.",price:"120k – 650k FCFA"},
+  {left:"38%",top:"35%",label:"Yamoussoukro — 214",price:"150k – 300k FCFA"},
+  {left:"55%",top:"28%",label:"Bouaké — 187 rés.",price:"80k – 250k FCFA"},
+  {left:"22%",top:"70%",label:"San-Pédro — 98 rés.",price:"200k – 500k FCFA"},
+  {left:"30%",top:"42%",label:"Daloa — 76 rés.",price:"70k – 180k FCFA"},
+  {left:"18%",top:"30%",label:"Man — 54 rés.",price:"60k – 150k FCFA"},
+];
+
+// ─── RENDER ───────────────────────────────────────────────────────────────
+function renderResidences() {
+  document.getElementById('residenceGrid').innerHTML = residences.map((r,i) => `
+    <div class="res-card" onclick="openResidence(${i})">
+      <div class="card-img">
+        <div class="card-img-inner">${r.emoji}</div>
+        ${r.badge ? `<div class="card-badge">${r.badge}</div>` : ''}
+        <button class="card-fav" onclick="event.stopPropagation();toggleFav(this)">🤍</button>
+        <div class="card-avail ${r.avail?'avail-yes':'avail-no'}">${r.avail?'✅ Disponible':'🔴 Complet'}</div>
+      </div>
+      <div class="card-body">
+        <div class="card-location">📍 ${r.location} · <strong style="color:var(--text2)">${r.type}</strong></div>
+        <div class="card-name">${r.name}</div>
+        <div class="card-desc">${r.desc.substring(0,100)}…</div>
+        <div class="card-amenities">${r.amenities.slice(0,4).map(a=>`<span class="amenity">${a}</span>`).join('')}</div>
+        <div class="card-footer">
+          <div class="card-rating">
+            <span class="stars">★★★★★</span>
+            <span class="rating-val">${r.rating}</span>
+            <span class="rating-count">(${r.reviews} avis)</span>
+          </div>
+          <div class="card-price">
+            <div class="price-from">À partir de</div>
+            <div><span class="price-val">${r.price.replace(' FCFA','')}</span><span class="price-unit"> FCFA/mois</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderOwners() {
+  document.getElementById('ownerGrid').innerHTML = owners.map(o => `
+    <div class="owner-card">
+      <div class="owner-top">
+        <div class="owner-avatar" style="background:${o.bg};font-size:28px;">${o.avatar}</div>
+        <div>
+          <div class="owner-name">${o.name}</div>
+          <div class="owner-title">${o.title}</div>
+          <div class="owner-badge">${o.badge}</div>
+        </div>
+      </div>
+      <div class="owner-bio">${o.bio}</div>
+      <div class="owner-langs">${o.langs.map(l=>`<span class="lang-tag">${l}</span>`).join('')}</div>
+      <div class="owner-footer">
+        <div class="owner-stat">Biens : <strong>${o.biens}</strong> · ${o.rating}</div>
+        <div class="owner-response">⚡ ${o.response}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderPricing(plans, id) {
+  document.getElementById(id).innerHTML = plans.map(p => `
+    <div class="price-card ${p.pop?'featured':''}">
+      ${p.pop?'<div class="price-pop">⭐ Le plus populaire</div>':''}
+      <div class="price-name">${p.name}</div>
+      <div class="price-amount">${p.price === '0' ? '' : ''}<span style="font-size:${p.price.length>6?'28px':'44px'}">${p.price}</span></div>
+      <div class="price-per">${p.per}</div>
+      <ul class="price-features">
+        ${p.features.map(f=>`<li>${f}</li>`).join('')}
+        ${p.no.map(f=>`<li class="no">${f}</li>`).join('')}
+      </ul>
+      <button class="btn-price" onclick="showToast('${p.pop?'🎉':'✅'}','Abonnement ${p.name} sélectionné !')">Choisir ${p.name}</button>
+    </div>
+  `).join('');
+}
+
+function renderMapPins() {
+  document.getElementById('mapPins').innerHTML = mapPins.map((p,i) => `
+    <div class="map-pin" style="left:${p.left};top:${p.top};" onclick="openResidence(${Math.min(i,residences.length-1)})">
+      <div class="pin-body"><span>${residences[Math.min(i,residences.length-1)].emoji}</span></div>
+      <div class="pin-price">${p.label}<br><small>${p.price}</small></div>
+    </div>
+  `).join('');
+}
+
+// ─── MODAL ────────────────────────────────────────────────────────────────
+let currentPrice = 150000, selectedDay = null;
+
+function openResidence(i) {
+  const r = residences[i];
+  currentPrice = r.priceNum;
+  document.getElementById('modalName').textContent = r.name;
+  document.getElementById('modalLocation').textContent = '📍 ' + r.location + '  ·  ' + r.type;
+  document.getElementById('modalDesc').textContent = r.desc;
+  document.getElementById('modalImg').textContent = r.emoji;
+  document.getElementById('modalPrice').textContent = r.price;
+  document.getElementById('modalAmenities').innerHTML = r.amenities.map(a=>`<span class="amenity-item">${a}</span>`).join('');
+  document.getElementById('modalGallery').innerHTML = (r.galleryEmojis||['🛋','🛏','🍳','🚿']).map(e=>`<div class="gallery-thumb">${e}</div>`).join('');
+  const o = owners.find(x=>x.name===r.owner)||owners[0];
+  document.getElementById('modalOwner').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;padding:14px;background:var(--surface2);border-radius:12px;border:1px solid var(--border);">
+      <div style="width:48px;height:48px;border-radius:50%;background:${o.bg};display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${o.avatar}</div>
+      <div>
+        <div style="font-weight:700;color:var(--text);font-family:var(--font-head);">${o.name}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px;">${o.title} · ${o.badge}</div>
+        <div style="font-size:12px;color:var(--green);font-weight:600;margin-top:3px;">⚡ ${o.response}</div>
+      </div>
+    </div>`;
+  document.getElementById('modalReviews').innerHTML = (r.reviewList||[]).map(rv=>`
+    <div style="padding:12px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+        <strong style="font-size:13px;color:var(--text);font-family:var(--font-head);">${rv.user}</strong>
+        <span style="color:var(--orange);font-size:13px;">${'★'.repeat(rv.r)}</span>
+      </div>
+      <div style="font-size:13.5px;color:var(--text2);font-style:italic;">"${rv.txt}"</div>
+    </div>`).join('');
+  buildCalendar();
+  updateSummary();
+  document.getElementById('residenceModal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('residenceModal').classList.remove('open'); }
+
+// ─── CALENDAR ─────────────────────────────────────────────────────────────
+let calYear = new Date().getFullYear(), calMonth = new Date().getMonth();
+const monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+function buildCalendar() {
+  const today = new Date();
+  const booked = [5, 12, 19, 24];
+  document.getElementById('calMonthLabel').textContent = monthNames[calMonth] + ' ' + calYear;
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const offset = firstDay === 0 ? 6 : firstDay - 1;
+  const days = new Date(calYear, calMonth + 1, 0).getDate();
+  const headers = ['L','M','M','J','V','S','D'];
+  let html = headers.map(d => `<div class="cal-day header">${d}</div>`).join('');
+  for(let i = 0; i < offset; i++) html += `<div class="cal-day empty"></div>`;
+  for(let d = 1; d <= days; d++) {
+    const isPast = (calYear === today.getFullYear() && calMonth === today.getMonth() && d < today.getDate()) || calMonth < today.getMonth();
+    const isBooked = booked.includes(d);
+    const isToday = d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
+    let cls = 'cal-day ';
+    if(isPast||isBooked) cls+='booked'; else cls+='available';
+    if(isToday) cls+=' today';
+    if(selectedDay===d && !isPast && !isBooked) cls+=' selected';
+    html += `<div class="${cls}" onclick="selectDay(this,${d})">${d}</div>`;
+  }
+  document.getElementById('calendarGrid').innerHTML = html;
+}
+
+function prevMonth() { calMonth--; if(calMonth<0){calMonth=11;calYear--;} buildCalendar(); }
+function nextMonth() { calMonth++; if(calMonth>11){calMonth=0;calYear++;} buildCalendar(); }
+function selectDay(el, d) { selectedDay=d; buildCalendar(); updateSummary(); }
+
+function updateSummary() {
+  const dur = parseInt(document.getElementById('dureeSelect')?.value || 1);
+  const loyer = currentPrice;
+  const caution = loyer;
+  const frais = Math.round(loyer * 0.05);
+  const total = loyer + caution + frais;
+  const fmt = n => n.toLocaleString('fr-FR') + ' FCFA';
+  document.getElementById('s-loyer').textContent = fmt(loyer) + ' × ' + dur + ' mois';
+  document.getElementById('s-caution').textContent = fmt(caution);
+  document.getElementById('s-frais').textContent = fmt(frais);
+  document.getElementById('s-total').textContent = fmt(total);
+}
+
+function doReservation() {
+  if(!selectedDay) { showToast('⚠️','Veuillez sélectionner une date d\'entrée'); return; }
+  showToast('🎉','Réservation confirmée ! Vous recevrez un SMS de confirmation.');
+  setTimeout(closeModal, 1400);
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────
+function showSection(name) {
+  ['home','residences','proprietaires','pricing','monetisation'].forEach(s => {
+    const el = document.getElementById('section-'+s);
+    if(el) el.style.display = s===name ? '' : 'none';
+  });
+  window.scrollTo({top:0, behavior:'smooth'});
+  if(name==='residences') { renderResidences(); renderMapPins(); }
+  if(name==='proprietaires') renderOwners();
+  if(name==='pricing') {
+    renderPricing(pricingProprio,'pgProprio');
+    renderPricing(pricingLocataire,'pgLocataire');
+    renderPricing(pricingAnnonceur,'pgAnnonceur');
+  }
+}
+
+function toggleFilter(el) {
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function toggleFav(el) {
+  el.textContent = el.textContent==='🤍' ? '❤️' : '🤍';
+  showToast('❤️','Résidence ajoutée à vos favoris');
+}
+
+function activateGeo() {
+  showToast('📍','Géolocalisation activée — résidences proches de vous !');
+  document.getElementById('mapCenter').style.opacity='0';
+}
+
+function switchTab(el, id) {
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['tab-proprio','tab-locataire','tab-annonceur'].forEach(t=>{
+    document.getElementById(t).style.display = t===id?'':'none';
+  });
+}
+
+let toastTimer;
+function showToast(icon, msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastIcon').textContent = icon;
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+document.getElementById('residenceModal').addEventListener('click', e=>{
+  if(e.target===document.getElementById('residenceModal')) closeModal();
+});
+
+showSection('home');
+</script>
+
+</body>
+</html>
