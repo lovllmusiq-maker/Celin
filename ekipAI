@@ -1,0 +1,536 @@
+import { useState, useEffect, useRef } from "react";
+
+const AGENTS = [
+  {
+    id: "M",
+    name: "AgentM",
+    role: "Manager",
+    color: "#F5A623",
+    glow: "rgba(245,166,35,0.4)",
+    icon: "◈",
+    desc: "Orchestrateur central. Décompose les objectifs, coordonne tous les agents, compile les rapports.",
+    inputs: ["Objectif global", "État des agents"],
+    outputs: ["Rapport synthèse", "Attribution des tâches"],
+    connects: ["I", "A", "V", "P", "R"],
+    status: "idle",
+  },
+  {
+    id: "I",
+    name: "AgentI",
+    role: "Idées",
+    color: "#7ED4E6",
+    glow: "rgba(126,212,230,0.4)",
+    icon: "◎",
+    desc: "Brainstorming structuré d'idées d'apps. Scoring et plan de MVP pour les meilleures.",
+    inputs: ["Domaines d'intérêt", "Contraintes (stack, temps, monétisation)"],
+    outputs: ["10 idées scorées", "Fiche MVP top 2-3"],
+    connects: ["M", "V"],
+    status: "idle",
+  },
+  {
+    id: "A",
+    name: "AgentA",
+    role: "Agenda",
+    color: "#A78BFA",
+    glow: "rgba(167,139,250,0.4)",
+    icon: "◷",
+    desc: "Transforme tes objectifs en planning hebdomadaire. Crée les événements Google Calendar.",
+    inputs: ["Objectifs semaine", "Contraintes horaires"],
+    outputs: ["Planning détaillé", "Events Calendar"],
+    connects: ["M", "V"],
+    status: "idle",
+  },
+  {
+    id: "V",
+    name: "AgentV",
+    role: "Vérificateur",
+    color: "#34D399",
+    glow: "rgba(52,211,153,0.4)",
+    icon: "◉",
+    desc: "Relit et valide chaque contenu avant publication. Check qualité, cohérence, orthographe.",
+    inputs: ["Tâche + résultat produit"],
+    outputs: ["OK + rapport", "À corriger + suggestions"],
+    connects: ["P", "M"],
+    status: "idle",
+  },
+  {
+    id: "P",
+    name: "AgentP",
+    role: "Publication",
+    color: "#F87171",
+    glow: "rgba(248,113,113,0.4)",
+    icon: "◆",
+    desc: "Publie les contenus validés sur ton CMS, réseaux sociaux, et sauvegarde les URLs.",
+    inputs: ["Contenu validé", "Métadonnées (titre, tags, plateforme)"],
+    outputs: ["Liens publiés", "Statut succès/erreur"],
+    connects: ["M"],
+    status: "idle",
+  },
+  {
+    id: "R",
+    name: "AgentR",
+    role: "Recherche Users",
+    color: "#FB923C",
+    glow: "rgba(251,146,60,0.4)",
+    icon: "◐",
+    desc: "Identifie et approche des utilisateurs potentiels. Génère personas, canaux et messages d'outreach.",
+    inputs: ["Description app", "Persona cible"],
+    outputs: ["Plan d'actions", "Messages outreach", "Logs envois"],
+    connects: ["M"],
+    status: "idle",
+  },
+];
+
+const FLOWS = [
+  { from: "M", to: "I", label: "Brainstorm" },
+  { from: "M", to: "A", label: "Planning" },
+  { from: "M", to: "R", label: "Outreach" },
+  { from: "I", to: "V", label: "Idées → Check" },
+  { from: "A", to: "V", label: "Plan → Check" },
+  { from: "V", to: "P", label: "Validé → Pub" },
+  { from: "V", to: "M", label: "Rapport" },
+  { from: "P", to: "M", label: "URLs publiées" },
+  { from: "R", to: "M", label: "Résultats" },
+];
+
+const NODE_POSITIONS = {
+  M: { x: 50, y: 50 },
+  I: { x: 18, y: 18 },
+  A: { x: 82, y: 18 },
+  V: { x: 50, y: 82 },
+  P: { x: 18, y: 82 },
+  R: { x: 82, y: 82 },
+};
+
+const STATUS_COLORS = {
+  idle: "#4B5563",
+  running: "#F5A623",
+  done: "#34D399",
+  error: "#F87171",
+};
+
+const SCENARIO_STEPS = [
+  { agent: "M", action: "Analyse de l'objectif...", delay: 0 },
+  { agent: "I", action: "Génération de 5 idées d'app", delay: 1200 },
+  { agent: "A", action: "Construction du planning 7 jours", delay: 2400 },
+  { agent: "V", action: "Vérification du contenu landing page", delay: 3600 },
+  { agent: "R", action: "Recherche de 10 freelancers bêta", delay: 4800 },
+  { agent: "P", action: "Publication landing page + LinkedIn", delay: 6000 },
+  { agent: "M", action: "Compilation du rapport final ✓", delay: 7200 },
+];
+
+export default function AgentDashboard() {
+  const [selected, setSelected] = useState(null);
+  const [agentStatuses, setAgentStatuses] = useState({});
+  const [running, setRunning] = useState(false);
+  const [log, setLog] = useState([]);
+  const [objective, setObjective] = useState("");
+  const [activeFlow, setActiveFlow] = useState(null);
+  const [pulse, setPulse] = useState({});
+  const logRef = useRef(null);
+  const timeoutsRef = useRef([]);
+
+  const selectedAgent = AGENTS.find((a) => a.id === selected);
+
+  useEffect(() => {
+    if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
+  }, [log]);
+
+  const clearAll = () => {
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [];
+    setRunning(false);
+    setAgentStatuses({});
+    setActiveFlow(null);
+    setPulse({});
+  };
+
+  const runScenario = () => {
+    if (running) return;
+    if (!objective.trim()) return;
+    clearAll();
+    setRunning(true);
+    setLog([{ ts: now(), text: `🎯 Objectif reçu : "${objective}"`, type: "system" }]);
+
+    SCENARIO_STEPS.forEach((step, idx) => {
+      const t1 = setTimeout(() => {
+        setAgentStatuses((s) => ({ ...s, [step.agent]: "running" }));
+        setPulse((p) => ({ ...p, [step.agent]: true }));
+        setLog((l) => [...l, { ts: now(), text: `[${step.agent}] ${step.action}`, type: step.agent }]);
+        if (idx > 0) {
+          const prev = SCENARIO_STEPS[idx - 1].agent;
+          const flow = FLOWS.find((f) => f.from === prev && f.to === step.agent) ||
+                       FLOWS.find((f) => f.from === step.agent && f.to === prev);
+          if (flow) setActiveFlow(`${flow.from}-${flow.to}`);
+        }
+      }, step.delay);
+
+      const t2 = setTimeout(() => {
+        setAgentStatuses((s) => ({ ...s, [step.agent]: "done" }));
+        setPulse((p) => ({ ...p, [step.agent]: false }));
+      }, step.delay + 900);
+
+      timeoutsRef.current.push(t1, t2);
+    });
+
+    const tEnd = setTimeout(() => {
+      setRunning(false);
+      setActiveFlow(null);
+      setLog((l) => [...l, { ts: now(), text: "✅ Scénario terminé — rapport disponible.", type: "system" }]);
+    }, SCENARIO_STEPS[SCENARIO_STEPS.length - 1].delay + 1200);
+    timeoutsRef.current.push(tEnd);
+  };
+
+  function now() {
+    return new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  }
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: "#080C12",
+      color: "#E2E8F0",
+      fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
+      display: "flex",
+      flexDirection: "column",
+      overflow: "hidden",
+    }}>
+      {/* Header */}
+      <div style={{
+        borderBottom: "1px solid #1E293B",
+        padding: "14px 28px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        background: "linear-gradient(90deg, #0D1420 0%, #080C12 100%)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{
+            width: 10, height: 10, borderRadius: "50%",
+            background: running ? "#F5A623" : "#34D399",
+            boxShadow: running ? "0 0 12px #F5A623" : "0 0 8px #34D399",
+            animation: running ? "blink 0.8s infinite" : "none",
+          }} />
+          <span style={{ fontSize: 13, letterSpacing: "0.2em", color: "#94A3B8", textTransform: "uppercase" }}>
+            Multi-Agent OS
+          </span>
+          <span style={{ color: "#1E293B", fontSize: 18 }}>|</span>
+          <span style={{ fontSize: 13, color: "#F5A623", letterSpacing: "0.1em" }}>6 agents actifs</span>
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          {["M","I","A","V","P","R"].map(id => (
+            <div key={id} style={{
+              width: 8, height: 8, borderRadius: "50%",
+              background: STATUS_COLORS[agentStatuses[id] || "idle"],
+              transition: "background 0.3s",
+            }} />
+          ))}
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        {/* Left: Graph */}
+        <div style={{ flex: "0 0 420px", padding: "24px", borderRight: "1px solid #1E293B", position: "relative" }}>
+          <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#475569", marginBottom: 16, textTransform: "uppercase" }}>
+            Topology / Agent Graph
+          </div>
+
+          <div style={{ position: "relative", width: "100%", paddingBottom: "100%", marginBottom: 20 }}>
+            <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} viewBox="0 0 100 100">
+              <defs>
+                {AGENTS.map(a => (
+                  <radialGradient key={a.id} id={`glow-${a.id}`}>
+                    <stop offset="0%" stopColor={a.color} stopOpacity="0.3" />
+                    <stop offset="100%" stopColor={a.color} stopOpacity="0" />
+                  </radialGradient>
+                ))}
+              </defs>
+
+              {/* Flows */}
+              {FLOWS.map((f) => {
+                const from = NODE_POSITIONS[f.from];
+                const to = NODE_POSITIONS[f.to];
+                const key = `${f.from}-${f.to}`;
+                const isActive = activeFlow === key;
+                return (
+                  <g key={key}>
+                    <line
+                      x1={from.x} y1={from.y} x2={to.x} y2={to.y}
+                      stroke={isActive ? "#F5A623" : "#1E293B"}
+                      strokeWidth={isActive ? 0.8 : 0.4}
+                      strokeDasharray={isActive ? "none" : "2,2"}
+                      style={{ transition: "stroke 0.3s, stroke-width 0.3s" }}
+                    />
+                    {isActive && (
+                      <circle r="1.2" fill="#F5A623">
+                        <animateMotion dur="0.9s" repeatCount="indefinite"
+                          path={`M${from.x},${from.y} L${to.x},${to.y}`} />
+                      </circle>
+                    )}
+                  </g>
+                );
+              })}
+
+              {/* Nodes */}
+              {AGENTS.map((agent) => {
+                const pos = NODE_POSITIONS[agent.id];
+                const status = agentStatuses[agent.id] || "idle";
+                const isSelected = selected === agent.id;
+                const isPulsing = pulse[agent.id];
+                return (
+                  <g key={agent.id} style={{ cursor: "pointer" }}
+                    onClick={() => setSelected(selected === agent.id ? null : agent.id)}>
+                    {isPulsing && (
+                      <circle cx={pos.x} cy={pos.y} r="8" fill={`url(#glow-${agent.id})`}>
+                        <animate attributeName="r" values="6;11;6" dur="1s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" values="0.8;0;0.8" dur="1s" repeatCount="indefinite" />
+                      </circle>
+                    )}
+                    <circle cx={pos.x} cy={pos.y} r={isSelected ? 7.5 : 6}
+                      fill="#0D1420"
+                      stroke={status === "running" ? agent.color : status === "done" ? "#34D399" : isSelected ? agent.color : "#2D3748"}
+                      strokeWidth={isSelected ? 1.5 : 1}
+                      style={{ transition: "all 0.3s", filter: isPulsing ? `drop-shadow(0 0 3px ${agent.color})` : "none" }}
+                    />
+                    <text x={pos.x} y={pos.y + 0.8} textAnchor="middle" dominantBaseline="middle"
+                      fontSize="5" fill={agent.color} fontFamily="monospace">{agent.icon}</text>
+                    <text x={pos.x} y={pos.y + 10.5} textAnchor="middle" fontSize="2.8"
+                      fill={isSelected ? agent.color : "#64748B"} fontFamily="monospace"
+                      style={{ transition: "fill 0.2s" }}>{agent.id}</text>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+
+          {/* Agent list */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {AGENTS.map((agent) => {
+              const status = agentStatuses[agent.id] || "idle";
+              const isSelected = selected === agent.id;
+              return (
+                <div key={agent.id}
+                  onClick={() => setSelected(selected === agent.id ? null : agent.id)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "8px 12px", borderRadius: 6, cursor: "pointer",
+                    background: isSelected ? "rgba(255,255,255,0.04)" : "transparent",
+                    border: `1px solid ${isSelected ? agent.color + "60" : "transparent"}`,
+                    transition: "all 0.2s",
+                  }}>
+                  <span style={{ fontSize: 16, color: agent.color }}>{agent.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 12, color: isSelected ? agent.color : "#CBD5E1" }}>{agent.name}</div>
+                    <div style={{ fontSize: 10, color: "#475569" }}>{agent.role}</div>
+                  </div>
+                  <div style={{
+                    fontSize: 9, padding: "2px 7px", borderRadius: 4,
+                    background: STATUS_COLORS[status] + "22",
+                    color: STATUS_COLORS[status],
+                    border: `1px solid ${STATUS_COLORS[status]}44`,
+                    letterSpacing: "0.1em", textTransform: "uppercase",
+                  }}>{status}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Center: Detail + Control */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          {/* Agent Detail */}
+          <div style={{ flex: "0 0 auto", padding: "24px", borderBottom: "1px solid #1E293B", minHeight: 180 }}>
+            {selectedAgent ? (
+              <div style={{ animation: "fadeIn 0.3s ease" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                  <span style={{ fontSize: 28, color: selectedAgent.color, filter: `drop-shadow(0 0 8px ${selectedAgent.color})` }}>
+                    {selectedAgent.icon}
+                  </span>
+                  <div>
+                    <div style={{ fontSize: 18, color: selectedAgent.color, letterSpacing: "0.05em" }}>
+                      {selectedAgent.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#475569", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+                      {selectedAgent.role}
+                    </div>
+                  </div>
+                </div>
+                <p style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.7, marginBottom: 16 }}>{selectedAgent.desc}</p>
+                <div style={{ display: "flex", gap: 24 }}>
+                  <div>
+                    <div style={{ fontSize: 10, color: "#475569", marginBottom: 6, letterSpacing: "0.15em", textTransform: "uppercase" }}>Entrées</div>
+                    {selectedAgent.inputs.map((i, idx) => (
+                      <div key={idx} style={{ fontSize: 11, color: "#64748B", display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                        <span style={{ color: "#334155" }}>→</span> {i}
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, color: "#475569", marginBottom: 6, letterSpacing: "0.15em", textTransform: "uppercase" }}>Sorties</div>
+                    {selectedAgent.outputs.map((o, idx) => (
+                      <div key={idx} style={{ fontSize: 11, color: selectedAgent.color + "CC", display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                        <span>←</span> {o}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ color: "#334155", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", height: "100%", letterSpacing: "0.1em" }}>
+                ← Sélectionne un agent pour voir sa fiche
+              </div>
+            )}
+          </div>
+
+          {/* Objective Input */}
+          <div style={{ padding: "20px 24px", borderBottom: "1px solid #1E293B" }}>
+            <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#475569", marginBottom: 10, textTransform: "uppercase" }}>
+              Mission / Objectif global
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <input
+                value={objective}
+                onChange={e => setObjective(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && runScenario()}
+                placeholder="Ex: Tester une nouvelle app pour freelancers en 7 jours"
+                style={{
+                  flex: 1, background: "#0D1420", border: "1px solid #1E293B",
+                  borderRadius: 6, padding: "10px 14px", color: "#E2E8F0",
+                  fontSize: 13, fontFamily: "inherit", outline: "none",
+                  transition: "border-color 0.2s",
+                }}
+                onFocus={e => e.target.style.borderColor = "#F5A623"}
+                onBlur={e => e.target.style.borderColor = "#1E293B"}
+              />
+              <button
+                onClick={runScenario}
+                disabled={running || !objective.trim()}
+                style={{
+                  background: running ? "#1E293B" : "linear-gradient(135deg, #F5A623, #F59E0B)",
+                  border: "none", borderRadius: 6, padding: "10px 20px",
+                  color: running ? "#475569" : "#000",
+                  fontSize: 12, fontFamily: "inherit", cursor: running ? "not-allowed" : "pointer",
+                  letterSpacing: "0.1em", fontWeight: "bold", transition: "all 0.2s",
+                  whiteSpace: "nowrap",
+                }}>
+                {running ? "⟳ EN COURS" : "▶ LANCER"}
+              </button>
+              {(running || log.length > 0) && (
+                <button onClick={() => { clearAll(); setLog([]); setObjective(""); }}
+                  style={{
+                    background: "transparent", border: "1px solid #1E293B",
+                    borderRadius: 6, padding: "10px 14px", color: "#475569",
+                    fontSize: 12, fontFamily: "inherit", cursor: "pointer",
+                  }}>✕</button>
+              )}
+            </div>
+          </div>
+
+          {/* Log */}
+          <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", padding: "20px 24px" }}>
+            <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#475569", marginBottom: 10, textTransform: "uppercase" }}>
+              Execution Log
+            </div>
+            <div ref={logRef} style={{
+              flex: 1, overflowY: "auto", fontFamily: "monospace",
+              fontSize: 12, lineHeight: 1.8,
+            }}>
+              {log.length === 0 ? (
+                <div style={{ color: "#1E293B", letterSpacing: "0.05em" }}>
+                  &gt; Système prêt. Entre un objectif et lance le scénario...
+                </div>
+              ) : (
+                log.map((entry, i) => {
+                  const agent = AGENTS.find(a => a.id === entry.type);
+                  return (
+                    <div key={i} style={{
+                      display: "flex", gap: 14, alignItems: "flex-start",
+                      padding: "2px 0",
+                      animation: "slideIn 0.3s ease",
+                    }}>
+                      <span style={{ color: "#334155", flexShrink: 0 }}>{entry.ts}</span>
+                      <span style={{ color: agent ? agent.color : "#F5A623" }}>
+                        {entry.text}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+              {running && (
+                <div style={{ color: "#F5A623", animation: "blink 1s infinite" }}>▌</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Roadmap */}
+        <div style={{ flex: "0 0 220px", borderLeft: "1px solid #1E293B", padding: "24px 18px", overflowY: "auto" }}>
+          <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#475569", marginBottom: 16, textTransform: "uppercase" }}>
+            Roadmap
+          </div>
+          {[
+            { week: "S1", label: "AgentI + AgentA", desc: "Idées & planning", agents: ["I", "A"], done: false },
+            { week: "S2", label: "AgentV + AgentP", desc: "Vérif & publication", agents: ["V", "P"], done: false },
+            { week: "S3", label: "AgentR", desc: "Recherche users", agents: ["R"], done: false },
+            { week: "S4", label: "AgentM", desc: "Orchestration full", agents: ["M"], done: false },
+          ].map((item, i) => {
+            const allDone = item.agents.every(id => agentStatuses[id] === "done");
+            return (
+              <div key={i} style={{
+                marginBottom: 16, paddingLeft: 16,
+                borderLeft: `2px solid ${allDone ? "#34D399" : "#1E293B"}`,
+                transition: "border-color 0.5s",
+              }}>
+                <div style={{
+                  fontSize: 10, letterSpacing: "0.15em",
+                  color: allDone ? "#34D399" : "#F5A623",
+                  marginBottom: 3,
+                }}>
+                  {allDone ? "✓ " : ""}{item.week}
+                </div>
+                <div style={{ fontSize: 12, color: allDone ? "#94A3B8" : "#CBD5E1", marginBottom: 3 }}>
+                  {item.label}
+                </div>
+                <div style={{ fontSize: 10, color: "#475569" }}>{item.desc}</div>
+                <div style={{ display: "flex", gap: 4, marginTop: 6 }}>
+                  {item.agents.map(id => {
+                    const agent = AGENTS.find(a => a.id === id);
+                    return (
+                      <span key={id} style={{
+                        fontSize: 9, padding: "1px 6px", borderRadius: 3,
+                        background: (agentStatuses[id] === "done" ? agent.color : "#1E293B") + "33",
+                        color: agentStatuses[id] === "done" ? agent.color : "#475569",
+                        border: `1px solid ${agentStatuses[id] === "done" ? agent.color + "55" : "#1E293B"}`,
+                        transition: "all 0.4s",
+                      }}>{id}</span>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+
+          <div style={{ marginTop: 24, padding: "12px", background: "#0D1420", borderRadius: 6, border: "1px solid #1E293B" }}>
+            <div style={{ fontSize: 10, color: "#475569", marginBottom: 8, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+              Stack conseillée
+            </div>
+            {["n8n / Make", "Notion / Airtable", "Google Calendar API", "CrewAI (backend)"].map((s, i) => (
+              <div key={i} style={{ fontSize: 10, color: "#64748B", marginBottom: 4, display: "flex", gap: 6 }}>
+                <span style={{ color: "#334155" }}>▸</span>{s}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes slideIn { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:translateX(0)} }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #080C12; }
+        ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 2px; }
+      `}</style>
+    </div>
+  );
+}
