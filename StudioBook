@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudioBook — Trouvez & Réservez Votre Studio</title>
+<meta name="description" content="La première marketplace française dédiée aux studios d'enregistrement professionnels. Trouvez, comparez, réservez.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+:root {
+  --bg:#0a0a0f; --bg2:#111118; --bg3:#16161f;
+  --surface:#1c1c28; --surface2:#232333; --border:#2a2a3d;
+  --gold:#c9a84c; --gold2:#e8c96a; --gold-dim:rgba(201,168,76,0.15);
+  --text:#f0f0f8; --text2:#9898b8; --text3:#5a5a7a;
+  --red:#e05252; --green:#52c093; --blue:#5b8dee;
+  --radius:12px; --font-head:'Syne',sans-serif; --font-body:'DM Sans',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;} html{scroll-behavior:smooth;}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-track{background:var(--bg2);} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* HEADER */
+header{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:68px;background:rgba(10,10,15,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(–border);}
+.logo{font-family:var(–font-head);font-size:22px;font-weight:800;letter-spacing:-0.5px;color:var(–text);display:flex;align-items:center;gap:8px;cursor:pointer;}
+.logo span{color:var(–gold);}
+nav{display:flex;align-items:center;gap:8px;}
+nav a{font-size:13.5px;font-weight:500;color:var(–text2);padding:6px 14px;border-radius:8px;cursor:pointer;transition:all .2s;text-decoration:none;}
+nav a:hover,nav a.active{color:var(–text);background:var(–surface);}
+.header-actions{display:flex;align-items:center;gap:10px;}
+.btn-ghost{font-family:var(–font-body);font-size:13.5px;font-weight:500;padding:8px 18px;border-radius:8px;cursor:pointer;background:transparent;border:1px solid var(–border);color:var(–text2);transition:all .2s;}
+.btn-ghost:hover{border-color:var(–gold);color:var(–gold);}
+.btn-gold{font-family:var(–font-body);font-size:13.5px;font-weight:600;padding:8px 20px;border-radius:8px;cursor:pointer;background:var(–gold);border:none;color:#0a0a0f;transition:all .2s;}
+.btn-gold:hover{background:var(–gold2);transform:translateY(-1px);}
+
+/* HAMBURGER MOBILE */
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;border:1px solid var(–border);border-radius:8px;background:var(–surface);}
+.hamburger span{width:20px;height:2px;background:var(–text2);border-radius:2px;transition:all .3s;}
+.hamburger.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px);}
+.hamburger.open span:nth-child(2){opacity:0;}
+.hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px);}
+.mobile-nav{display:none;position:fixed;top:68px;left:0;right:0;z-index:99;background:rgba(10,10,15,0.98);backdrop-filter:blur(20px);border-bottom:1px solid var(–border);padding:16px 20px;flex-direction:column;gap:4px;}
+.mobile-nav.open{display:flex;}
+.mobile-nav a{font-size:15px;font-weight:500;color:var(–text2);padding:10px 14px;border-radius:8px;cursor:pointer;transition:all .2s;}
+.mobile-nav a:hover{color:var(–text);background:var(–surface);}
+
+/* HERO */
+.hero{padding:140px 40px 80px;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;overflow:hidden;}
+.hero-bg{position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse 60% 50% at 20% 60%,rgba(201,168,76,0.07) 0%,transparent 70%),radial-gradient(ellipse 50% 60% at 80% 30%,rgba(91,141,238,0.06) 0%,transparent 70%),radial-gradient(ellipse 40% 40% at 50% 10%,rgba(201,168,76,0.04) 0%,transparent 60%);}
+.hero-badge{position:relative;z-index:1;display:inline-flex;align-items:center;gap:6px;background:var(–gold-dim);border:1px solid rgba(201,168,76,0.3);border-radius:100px;padding:5px 14px;font-size:12px;color:var(–gold2);font-weight:600;letter-spacing:0.5px;margin-bottom:28px;animation:fadeUp .6s ease both;}
+.hero-badge::before{content:‘●’;font-size:8px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+h1{position:relative;z-index:1;font-family:var(–font-head);font-size:clamp(38px,6vw,76px);font-weight:800;line-height:1.05;letter-spacing:-2px;color:var(–text);max-width:900px;animation:fadeUp .6s .1s ease both;}
+h1 em{font-style:normal;color:var(–gold);}
+.hero-sub{position:relative;z-index:1;font-size:18px;color:var(–text2);max-width:540px;line-height:1.7;margin-top:20px;font-weight:300;animation:fadeUp .6s .2s ease both;}
+.search-wrap{position:relative;z-index:1;margin-top:40px;width:100%;max-width:760px;animation:fadeUp .6s .3s ease both;}
+.search-bar{display:flex;align-items:center;background:var(–surface);border:1px solid var(–border);border-radius:16px;padding:6px 6px 6px 20px;gap:12px;transition:border-color .2s;}
+.search-bar:focus-within{border-color:var(–gold);}
+.search-divider{width:1px;height:32px;background:var(–border);flex-shrink:0;}
+.search-field{display:flex;flex-direction:column;flex:1;min-width:0;}
+.search-field label{font-size:10px;font-weight:600;color:var(–text3);letter-spacing:.5px;text-transform:uppercase;}
+.search-field input,.search-field select{background:transparent;border:none;outline:none;font-family:var(–font-body);font-size:14px;font-weight:500;color:var(–text);padding:2px 0;width:100%;}
+.search-field select option{background:var(–bg2);}
+.btn-search{background:var(–gold);border:none;border-radius:12px;padding:14px 28px;font-family:var(–font-head);font-size:15px;font-weight:700;color:#0a0a0f;cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0;}
+.btn-search:hover{background:var(–gold2);transform:scale(1.02);}
+.hero-stats{position:relative;z-index:1;display:flex;align-items:center;gap:40px;margin-top:36px;animation:fadeUp .6s .4s ease both;flex-wrap:wrap;justify-content:center;}
+.stat{text-align:center;}
+.stat strong{font-family:var(–font-head);font-size:26px;font-weight:800;color:var(–text);display:block;}
+.stat span{font-size:12px;color:var(–text3);font-weight:400;}
+.stat-sep{width:1px;height:36px;background:var(–border);}
+
+/* AD BANNER */
+.ad-banner{margin:0 40px;padding:14px 24px;background:linear-gradient(135deg,rgba(91,141,238,0.1),rgba(82,192,147,0.08));border:1px solid rgba(91,141,238,0.25);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:20px;font-size:13px;color:var(–text2);}
+.ad-banner strong{color:var(–blue);}
+.ad-tag{font-size:10px;font-weight:700;letter-spacing:1px;color:var(–text3);background:var(–surface);border:1px solid var(–border);padding:2px 8px;border-radius:4px;text-transform:uppercase;flex-shrink:0;}
+.ad-cta{padding:7px 16px;background:var(–blue);border:none;border-radius:8px;font-family:var(–font-body);font-size:12px;font-weight:600;color:#fff;cursor:pointer;transition:opacity .2s;white-space:nowrap;}
+.ad-cta:hover{opacity:.85;}
+
+/* SECTION */
+section{padding:72px 40px;}
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:36px;}
+.section-head h2{font-family:var(–font-head);font-size:30px;font-weight:800;letter-spacing:-1px;color:var(–text);}
+.section-head p{font-size:14px;color:var(–text2);margin-top:4px;}
+.see-all{font-size:13px;font-weight:600;color:var(–gold);cursor:pointer;border:1px solid rgba(201,168,76,0.3);padding:7px 16px;border-radius:8px;transition:all .2s;background:transparent;font-family:var(–font-body);}
+.see-all:hover{background:var(–gold-dim);}
+
+/* FILTERS */
+.filters{display:flex;align-items:center;gap:8px;margin-bottom:28px;flex-wrap:wrap;}
+.filter-chip{padding:7px 16px;border-radius:100px;font-size:13px;font-weight:500;border:1px solid var(–border);background:var(–surface);color:var(–text2);cursor:pointer;transition:all .2s;}
+.filter-chip:hover,.filter-chip.active{border-color:var(–gold);color:var(–gold);background:var(–gold-dim);}
+
+/* SEARCH BAR studios */
+.studio-search-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.studio-search-input{flex:1;padding:10px 16px;background:var(–surface);border:1px solid var(–border);border-radius:10px;font-family:var(–font-body);font-size:14px;color:var(–text);outline:none;transition:border-color .2s;}
+.studio-search-input:focus{border-color:var(–gold);}
+.sort-select{padding:10px 14px;background:var(–surface);border:1px solid var(–border);border-radius:10px;font-family:var(–font-body);font-size:13px;color:var(–text2);outline:none;cursor:pointer;}
+.sort-select option{background:var(–bg2);}
+.results-count{font-size:13px;color:var(–text3);margin-bottom:16px;}
+.results-count span{color:var(–gold);font-weight:700;}
+
+/* STUDIO GRID */
+.studio-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px;}
+.studio-card{background:var(–surface);border:1px solid var(–border);border-radius:16px;overflow:hidden;transition:all .25s;cursor:pointer;}
+.studio-card:hover{border-color:rgba(201,168,76,0.4);transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+.card-img{position:relative;height:200px;overflow:hidden;background:var(–surface2);display:flex;align-items:center;justify-content:center;font-size:80px;}
+.card-badge{position:absolute;top:12px;left:12px;background:rgba(10,10,15,0.85);backdrop-filter:blur(8px);border:1px solid var(–border);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;color:var(–gold);letter-spacing:.3px;}
+.card-fav{position:absolute;top:12px;right:12px;width:34px;height:34px;background:rgba(10,10,15,0.75);backdrop-filter:blur(8px);border:1px solid var(–border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .2s;}
+.card-fav:hover{background:var(–surface2);transform:scale(1.1);}
+.card-avail{position:absolute;bottom:12px;right:12px;background:rgba(82,192,147,0.9);border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;color:#0a2918;}
+.card-body{padding:18px;}
+.card-location{font-size:11.5px;color:var(–text3);display:flex;align-items:center;gap:4px;margin-bottom:6px;font-weight:500;}
+.card-name{font-family:var(–font-head);font-size:18px;font-weight:700;color:var(–text);letter-spacing:-.3px;margin-bottom:6px;}
+.card-desc{font-size:13px;color:var(–text2);line-height:1.6;margin-bottom:12px;}
+.card-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.tag{padding:3px 10px;border-radius:6px;font-size:11.5px;font-weight:600;background:var(–surface2);color:var(–text3);border:1px solid var(–border);}
+.card-footer{display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid var(–border);}
+.card-rating{display:flex;align-items:center;gap:5px;font-size:13px;}
+.stars{color:var(–gold);font-size:12px;}
+.rating-count{color:var(–text3);font-size:12px;}
+.card-price{text-align:right;}
+.price-from{font-size:10px;color:var(–text3);text-transform:uppercase;letter-spacing:.5px;}
+.price-val{font-family:var(–font-head);font-size:20px;font-weight:800;color:var(–text);}
+.price-unit{font-size:12px;color:var(–text3);}
+.no-results{text-align:center;padding:60px 20px;color:var(–text3);}
+.no-results h3{font-family:var(–font-head);font-size:22px;color:var(–text2);margin-bottom:8px;}
+
+/* MAP */
+.map-section{padding:0 40px 72px;}
+.map-wrap{border-radius:20px;overflow:hidden;border:1px solid var(–border);position:relative;height:480px;}
+#leaflet-map{width:100%;height:100%;}
+.leaflet-container{background:var(–bg3);}
+
+/* ENGINEERS */
+.engineer-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;}
+.eng-card{background:var(–surface);border:1px solid var(–border);border-radius:16px;padding:22px;transition:all .25s;cursor:pointer;display:flex;flex-direction:column;gap:14px;}
+.eng-card:hover{border-color:rgba(201,168,76,0.35);transform:translateY(-3px);box-shadow:0 16px 50px rgba(0,0,0,.4);}
+.eng-top{display:flex;align-items:center;gap:14px;}
+.eng-avatar{width:56px;height:56px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:26px;border:2px solid var(–border);}
+.eng-name{font-family:var(–font-head);font-size:16px;font-weight:700;color:var(–text);}
+.eng-title{font-size:12px;color:var(–text3);margin-top:2px;}
+.eng-studio-link{font-size:12px;color:var(–gold);font-weight:500;}
+.eng-bio{font-size:13px;color:var(–text2);line-height:1.6;}
+.eng-skills{display:flex;gap:6px;flex-wrap:wrap;}
+.eng-skill{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid rgba(201,168,76,0.3);color:var(–gold);background:var(–gold-dim);}
+.eng-footer{display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(–border);}
+.eng-xp{font-size:12px;color:var(–text3);}
+.eng-xp strong{color:var(–text);font-weight:600;}
+.eng-rate{font-family:var(–font-head);font-size:15px;font-weight:700;color:var(–text);}
+
+/* PRICING */
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:8px;}
+.price-card{background:var(–surface);border:1px solid var(–border);border-radius:20px;padding:32px 28px;position:relative;transition:all .25s;}
+.price-card:hover{transform:translateY(-4px);}
+.price-card.featured{border-color:var(–gold);background:linear-gradient(145deg,var(–surface),rgba(201,168,76,0.07));}
+.price-pop{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(–gold);color:#0a0a0f;font-size:11px;font-weight:800;padding:4px 16px;border-radius:100px;letter-spacing:.5px;white-space:nowrap;}
+.price-name{font-family:var(–font-head);font-size:14px;font-weight:700;color:var(–text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.price-amount{font-family:var(–font-head);font-size:42px;font-weight:800;color:var(–text);letter-spacing:-2px;line-height:1;}
+.price-amount sup{font-size:20px;vertical-align:top;margin-top:8px;display:inline-block;color:var(–text2);}
+.price-per{font-size:13px;color:var(–text3);margin-top:4px;margin-bottom:24px;}
+.price-features{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
+.price-features li{display:flex;align-items:center;gap:10px;font-size:14px;color:var(–text2);}
+.price-features li::before{content:‘✓’;color:var(–green);font-weight:700;font-size:13px;}
+.price-features li.no::before{content:‘✕’;color:var(–text3);}
+.price-features li.no{color:var(–text3);}
+.btn-price{width:100%;padding:13px;border-radius:12px;font-family:var(–font-head);font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;border:1px solid var(–border);background:var(–surface2);color:var(–text);}
+.btn-price:hover{border-color:var(–gold);color:var(–gold);}
+.price-card.featured .btn-price{background:var(–gold);color:#0a0a0f;border-color:var(–gold);}
+.price-card.featured .btn-price:hover{background:var(–gold2);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(–bg2);border:1px solid var(–border);border-radius:20px;width:100%;max-width:920px;max-height:90vh;overflow-y:auto;transform:translateY(30px) scale(.97);transition:transform .3s;position:relative;}
+.modal-overlay.open .modal{transform:none;}
+.modal-close{position:absolute;top:16px;right:16px;z-index:2;width:36px;height:36px;border-radius:50%;background:var(–surface);border:1px solid var(–border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(–text2);transition:all .2s;}
+.modal-close:hover{border-color:var(–gold);color:var(–gold);}
+.modal-hero{height:280px;background:var(–surface2);position:relative;border-radius:20px 20px 0 0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:80px;}
+.modal-hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,var(–bg2) 0%,transparent 60%);}
+.modal-hero-content{position:absolute;bottom:20px;left:28px;right:28px;}
+.modal-hero-content h2{font-family:var(–font-head);font-size:28px;font-weight:800;letter-spacing:-1px;color:var(–text);}
+.modal-hero-content p{font-size:14px;color:var(–text2);margin-top:4px;}
+.modal-body{padding:28px;display:grid;grid-template-columns:1fr 320px;gap:28px;}
+.modal-info-section{display:flex;flex-direction:column;gap:24px;}
+.info-block h4{font-family:var(–font-head);font-size:14px;font-weight:700;color:var(–text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;}
+.equip-list{display:flex;gap:8px;flex-wrap:wrap;}
+.equip-item{padding:6px 12px;background:var(–surface);border:1px solid var(–border);border-radius:8px;font-size:12.5px;color:var(–text2);}
+
+/* BOOKING PANEL */
+.booking-panel{background:var(–surface);border:1px solid var(–border);border-radius:16px;padding:22px;height:fit-content;position:sticky;top:20px;}
+.booking-panel h3{font-family:var(–font-head);font-size:18px;font-weight:800;color:var(–text);margin-bottom:4px;}
+.booking-price-line{font-size:13px;color:var(–text2);margin-bottom:20px;}
+.booking-price-line strong{font-size:22px;color:var(–text);font-family:var(–font-head);}
+.form-group{margin-bottom:14px;}
+.form-group label{font-size:11.5px;font-weight:700;color:var(–text3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;}
+.form-group input,.form-group select{width:100%;padding:10px 14px;background:var(–bg);border:1px solid var(–border);border-radius:10px;font-family:var(–font-body);font-size:14px;color:var(–text);outline:none;transition:border-color .2s;}
+.form-group input:focus,.form-group select:focus{border-color:var(–gold);}
+.form-group select option{background:var(–bg2);}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:14px;}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:12px;cursor:pointer;transition:all .15s;font-weight:500;}
+.cal-day.header{color:var(–text3);font-size:10px;font-weight:700;letter-spacing:.5px;cursor:default;}
+.cal-day.empty{pointer-events:none;}
+.cal-day.available{color:var(–text2);}
+.cal-day.available:hover{background:var(–surface2);color:var(–text);}
+.cal-day.selected{background:var(–gold);color:#0a0a0f;font-weight:700;}
+.cal-day.booked{color:var(–text3);text-decoration:line-through;cursor:not-allowed;}
+.cal-day.today{border:1px solid var(–gold);color:var(–gold);}
+.time-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:16px;}
+.time-slot{padding:7px 4px;border-radius:8px;border:1px solid var(–border);background:var(–surface2);text-align:center;font-size:11.5px;color:var(–text2);cursor:pointer;transition:all .15s;}
+.time-slot:hover{border-color:var(–gold);color:var(–gold);}
+.time-slot.selected{background:var(–gold-dim);border-color:var(–gold);color:var(–gold);font-weight:600;}
+.time-slot.taken{color:var(–text3);cursor:not-allowed;opacity:.5;text-decoration:line-through;}
+.booking-summary{background:var(–bg);border-radius:10px;padding:14px;margin-bottom:16px;}
+.summary-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:8px;color:var(–text2);}
+.summary-row:last-child{margin:0;padding-top:10px;border-top:1px solid var(–border);font-weight:700;color:var(–text);font-size:14px;}
+.btn-reserve{width:100%;padding:14px;background:var(–gold);border:none;border-radius:12px;font-family:var(–font-head);font-size:15px;font-weight:700;color:#0a0a0f;cursor:pointer;transition:all .2s;}
+.btn-reserve:hover{background:var(–gold2);transform:translateY(-1px);}
+.btn-reserve:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.secure-note{text-align:center;font-size:11px;color:var(–text3);margin-top:10px;display:flex;align-items:center;justify-content:center;gap:5px;}
+
+/* STRIPE MODAL */
+.stripe-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.9);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s;}
+.stripe-overlay.open{opacity:1;pointer-events:all;}
+.stripe-modal{background:var(–bg2);border:1px solid var(–border);border-radius:20px;width:100%;max-width:480px;padding:32px;position:relative;transform:translateY(30px);transition:transform .3s;}
+.stripe-overlay.open .stripe-modal{transform:none;}
+.stripe-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+.stripe-header h3{font-family:var(–font-head);font-size:20px;font-weight:800;color:var(–text);}
+.stripe-close{width:32px;height:32px;border-radius:50%;background:var(–surface);border:1px solid var(–border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(–text2);transition:all .2s;}
+.stripe-close:hover{border-color:var(–red);color:var(–red);}
+.stripe-amount-block{background:var(–surface);border-radius:12px;padding:16px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;}
+.stripe-amount-label{font-size:13px;color:var(–text2);}
+.stripe-amount-val{font-family:var(–font-head);font-size:24px;font-weight:800;color:var(–gold);}
+.stripe-form-group{margin-bottom:16px;}
+.stripe-form-group label{font-size:11px;font-weight:700;color:var(–text3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;}
+.stripe-input{width:100%;padding:12px 14px;background:var(–bg);border:1px solid var(–border);border-radius:10px;font-family:var(–font-body);font-size:14px;color:var(–text);outline:none;transition:border-color .2s;}
+.stripe-input:focus{border-color:var(–gold);}
+.stripe-input::placeholder{color:var(–text3);}
+.stripe-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.stripe-card-icons{display:flex;gap:6px;margin-bottom:16px;}
+.stripe-card-icon{padding:4px 10px;background:var(–surface);border:1px solid var(–border);border-radius:6px;font-size:11px;font-weight:700;color:var(–text3);}
+.btn-pay{width:100%;padding:16px;background:linear-gradient(135deg,#635BFF,#8B5CF6);border:none;border-radius:12px;font-family:var(–font-head);font-size:16px;font-weight:700;color:#fff;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;}
+.btn-pay:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(99,91,255,0.4);}
+.btn-pay:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.stripe-secure{text-align:center;font-size:11px;color:var(–text3);margin-top:12px;display:flex;align-items:center;justify-content:center;gap:6px;}
+.stripe-powered{font-size:10px;color:var(–text3);text-align:center;margin-top:8px;}
+.stripe-powered span{color:#635BFF;font-weight:700;}
+.stripe-spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* AUTH MODAL */
+.auth-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.9);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s;}
+.auth-overlay.open{opacity:1;pointer-events:all;}
+.auth-modal{background:var(–bg2);border:1px solid var(–border);border-radius:20px;width:100%;max-width:420px;padding:32px;position:relative;transform:translateY(30px);transition:transform .3s;}
+.auth-overlay.open .auth-modal{transform:none;}
+.auth-tabs{display:flex;gap:4px;margin-bottom:28px;background:var(–surface);border-radius:10px;padding:4px;}
+.auth-tab{flex:1;padding:8px;text-align:center;border-radius:8px;font-size:13px;font-weight:600;color:var(–text3);cursor:pointer;transition:all .2s;}
+.auth-tab.active{background:var(–bg2);color:var(–text);border:1px solid var(–border);}
+.auth-header{margin-bottom:24px;}
+.auth-header h3{font-family:var(–font-head);font-size:22px;font-weight:800;color:var(–text);}
+.auth-header p{font-size:13px;color:var(–text2);margin-top:4px;}
+.auth-form-group{margin-bottom:14px;}
+.auth-form-group label{font-size:11px;font-weight:700;color:var(–text3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;}
+.auth-input{width:100%;padding:12px 14px;background:var(–bg);border:1px solid var(–border);border-radius:10px;font-family:var(–font-body);font-size:14px;color:var(–text);outline:none;transition:border-color .2s;}
+.auth-input:focus{border-color:var(–gold);}
+.auth-input::placeholder{color:var(–text3);}
+.auth-role-select{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.role-card{padding:12px;border:1px solid var(–border);border-radius:10px;text-align:center;cursor:pointer;transition:all .2s;background:var(–bg);}
+.role-card:hover,.role-card.selected{border-color:var(–gold);background:var(–gold-dim);}
+.role-card span{font-size:22px;display:block;margin-bottom:4px;}
+.role-card p{font-size:12px;font-weight:600;color:var(–text2);}
+.role-card.selected p{color:var(–gold);}
+.btn-auth{width:100%;padding:14px;background:var(–gold);border:none;border-radius:12px;font-family:var(–font-head);font-size:15px;font-weight:700;color:#0a0a0f;cursor:pointer;transition:all .2s;margin-top:6px;}
+.btn-auth:hover{background:var(–gold2);transform:translateY(-1px);}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(–text3);font-size:12px;}
+.auth-divider::before,.auth-divider::after{content:’’;flex:1;height:1px;background:var(–border);}
+.btn-social{width:100%;padding:12px;background:var(–surface);border:1px solid var(–border);border-radius:10px;font-family:var(–font-body);font-size:13px;font-weight:600;color:var(–text2);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;}
+.btn-social:hover{border-color:var(–text2);color:var(–text);}
+.auth-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:var(–surface);border:1px solid var(–border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(–text2);transition:all .2s;}
+.auth-close:hover{border-color:var(–red);color:var(–red);}
+.auth-error{background:rgba(224,82,82,0.1);border:1px solid rgba(224,82,82,0.3);border-radius:8px;padding:10px 14px;font-size:13px;color:var(–red);margin-bottom:14px;display:none;}
+.auth-error.show{display:block;}
+
+/* USER MENU */
+.user-menu{position:relative;}
+.user-avatar{width:36px;height:36px;border-radius:50%;background:var(–gold-dim);border:2px solid var(–gold);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;font-weight:700;color:var(–gold);font-family:var(–font-head);}
+.user-dropdown{position:absolute;top:calc(100% + 10px);right:0;background:var(–bg2);border:1px solid var(–border);border-radius:12px;min-width:200px;padding:8px;opacity:0;pointer-events:none;transform:translateY(-8px);transition:all .2s;z-index:50;}
+.user-dropdown.open{opacity:1;pointer-events:all;transform:none;}
+.user-info{padding:10px 12px;border-bottom:1px solid var(–border);margin-bottom:6px;}
+.user-info strong{font-size:13px;font-weight:700;color:var(–text);display:block;}
+.user-info span{font-size:11px;color:var(–text3);}
+.dropdown-item{padding:8px 12px;border-radius:8px;font-size:13px;color:var(–text2);cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:8px;}
+.dropdown-item:hover{background:var(–surface);color:var(–text);}
+.dropdown-item.danger{color:var(–red);}
+.dropdown-item.danger:hover{background:rgba(224,82,82,0.1);}
+
+/* PARTNERS */
+.partner-section{background:var(–bg2);border-top:1px solid var(–border);border-bottom:1px solid var(–border);padding:40px;}
+.partner-head{text-align:center;margin-bottom:32px;}
+.partner-head h3{font-family:var(–font-head);font-size:13px;font-weight:700;color:var(–text3);text-transform:uppercase;letter-spacing:2px;}
+.partner-logos{display:flex;align-items:center;justify-content:center;gap:40px;flex-wrap:wrap;}
+.partner-logo{font-family:var(–font-head);font-size:18px;font-weight:800;color:var(–text3);opacity:.5;transition:opacity .2s;cursor:pointer;letter-spacing:-1px;}
+.partner-logo:hover{opacity:1;color:var(–text2);}
+
+/* SPONSORED */
+.sponsored-label{font-size:10px;font-weight:700;letter-spacing:1px;color:var(–text3);text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.sponsored-label::after{content:’’;flex:1;height:1px;background:var(–border);}
+.sponsored-card{background:linear-gradient(135deg,var(–surface),rgba(91,141,238,0.05));border:1px solid rgba(91,141,238,0.2);border-radius:14px;padding:18px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .2s;margin-bottom:12px;}
+.sponsored-card:hover{border-color:rgba(91,141,238,0.4);transform:translateX(4px);}
+.sponsored-icon{width:48px;height:48px;border-radius:10px;background:var(–surface2);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.sponsored-content{flex:1;min-width:0;}
+.sponsored-name{font-weight:700;color:var(–text);font-size:14px;}
+.sponsored-desc{font-size:12px;color:var(–text2);margin-top:2px;}
+.sponsored-cta{font-size:11px;font-weight:700;color:var(–blue);margin-top:4px;}
+.sponsor-tag{font-size:10px;color:var(–text3);background:var(–surface);padding:2px 8px;border-radius:4px;border:1px solid var(–border);flex-shrink:0;}
+
+/* REVENUE */
+.revenue-section{background:var(–bg2);padding:72px 40px;}
+.revenue-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;}
+.rev-card{background:var(–surface);border:1px solid var(–border);border-radius:14px;padding:20px;}
+.rev-label{font-size:11.5px;color:var(–text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:8px;}
+.rev-val{font-family:var(–font-head);font-size:28px;font-weight:800;color:var(–text);}
+.rev-change{font-size:12px;margin-top:4px;}
+.rev-change.up{color:var(–green);}
+.revenue-streams{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.stream-card{background:var(–surface);border:1px solid var(–border);border-radius:16px;padding:24px;}
+.stream-card h4{font-family:var(–font-head);font-size:16px;font-weight:700;color:var(–text);margin-bottom:16px;}
+.stream-item{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.stream-icon{width:36px;height:36px;border-radius:8px;background:var(–surface2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.stream-details{flex:1;}
+.stream-name{font-size:13px;font-weight:600;color:var(–text);}
+.stream-desc{font-size:11.5px;color:var(–text3);}
+.stream-pct{font-family:var(–font-head);font-size:15px;font-weight:700;color:var(–gold);}
+.stream-bar-wrap{background:var(–surface2);border-radius:4px;height:4px;margin-top:4px;}
+.stream-bar{height:4px;border-radius:4px;background:var(–gold);transition:width 1s ease;}
+
+/* NAV TABS */
+.nav-tabs{display:flex;gap:4px;margin-bottom:32px;border-bottom:1px solid var(–border);}
+.nav-tab{padding:10px 18px;font-size:14px;font-weight:600;color:var(–text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s;}
+.nav-tab.active{color:var(–gold);border-bottom-color:var(–gold);}
+.nav-tab:hover{color:var(–text2);}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;z-index:400;background:var(–surface);border:1px solid var(–border);border-radius:12px;padding:14px 20px;display:flex;align-items:center;gap:12px;font-size:14px;color:var(–text);box-shadow:0 8px 40px rgba(0,0,0,.5);transform:translateY(100px);opacity:0;transition:all .3s;max-width:340px;}
+.toast.show{transform:none;opacity:1;}
+.toast-icon{font-size:20px;}
+
+/* FOOTER */
+footer{background:var(–bg2);border-top:1px solid var(–border);padding:60px 40px 30px;}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px;}
+.footer-brand p{font-size:14px;color:var(–text3);line-height:1.7;margin-top:12px;max-width:280px;}
+.footer-col h5{font-family:var(–font-head);font-size:13px;font-weight:700;color:var(–text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}
+.footer-col a{display:block;font-size:13.5px;color:var(–text3);margin-bottom:8px;cursor:pointer;transition:color .2s;text-decoration:none;}
+.footer-col a:hover{color:var(–gold);}
+.footer-bottom{padding-top:24px;border-top:1px solid var(–border);display:flex;align-items:center;justify-content:space-between;}
+.footer-bottom p{font-size:12.5px;color:var(–text3);}
+.footer-socials{display:flex;gap:10px;}
+.social-btn{width:34px;height:34px;border-radius:8px;background:var(–surface);border:1px solid var(–border);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .2s;}
+.social-btn:hover{border-color:var(–gold);}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+header{padding:0 16px;}
+nav{display:none;}
+.hamburger{display:flex;}
+.header-actions .btn-ghost{display:none;}
+.hero{padding:100px 16px 60px;}
+section{padding:48px 16px;}
+.map-section{padding:0 16px 48px;}
+.search-bar{flex-wrap:wrap;padding:12px;}
+.search-divider{display:none;}
+.studio-grid{grid-template-columns:1fr;}
+.modal-body{grid-template-columns:1fr;}
+.footer-grid{grid-template-columns:1fr 1fr;gap:24px;}
+.revenue-grid{grid-template-columns:1fr 1fr;}
+.revenue-streams{grid-template-columns:1fr;}
+.ad-banner{flex-wrap:wrap;margin:0 16px;}
+.hero-stats{gap:20px;}
+.stat-sep{display:none;}
+}
+@media(max-width:480px){
+.footer-grid{grid-template-columns:1fr;}
+.revenue-grid{grid-template-columns:1fr;}
+.pricing-grid{grid-template-columns:1fr;}
+}
+</style>
+
+</head>
+<body>
+
+<!-- HEADER -->
+
+<header>
+  <div class="logo" onclick="showSection('home')">🎙 Studio<span>Book</span></div>
+  <nav id="desktopNav">
+    <a onclick="showSection('studios')" data-section="studios">Studios</a>
+    <a onclick="showSection('engineers')" data-section="engineers">Ingénieurs</a>
+    <a onclick="showSection('pricing')" data-section="pricing">Tarifs</a>
+    <a onclick="showSection('monetization')" data-section="monetization">Monétisation</a>
+  </nav>
+  <div class="header-actions">
+    <div id="authButtons">
+      <button class="btn-ghost" onclick="openAuth('login')">Se connecter</button>
+      <button class="btn-gold" onclick="openAuth('register')">Inscrire mon studio</button>
+    </div>
+    <div id="userMenuWrap" style="display:none;">
+      <div class="user-menu">
+        <div class="user-avatar" id="userAvatar" onclick="toggleDropdown()">?</div>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="user-info">
+            <strong id="dropdownName">Utilisateur</strong>
+            <span id="dropdownRole">Artiste</span>
+          </div>
+          <div class="dropdown-item" onclick="showSection('monetization');toggleDropdown()">💰 Mon dashboard</div>
+          <div class="dropdown-item" onclick="showToast('⚙️','Paramètres bientôt disponibles')">⚙️ Paramètres</div>
+          <div class="dropdown-item danger" onclick="logout()">🚪 Déconnexion</div>
+        </div>
+      </div>
+    </div>
+    <div class="hamburger" id="hamburger" onclick="toggleMobileNav()">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</header>
+
+<!-- MOBILE NAV -->
+
+<div class="mobile-nav" id="mobileNav">
+  <a onclick="showSection('studios');closeMobileNav()">🎙 Studios</a>
+  <a onclick="showSection('engineers');closeMobileNav()">🎚 Ingénieurs</a>
+  <a onclick="showSection('pricing');closeMobileNav()">💳 Tarifs</a>
+  <a onclick="showSection('monetization');closeMobileNav()">💰 Monétisation</a>
+  <a onclick="openAuth('login');closeMobileNav()" style="color:var(--gold);">→ Se connecter</a>
+</div>
+
+<!-- =================== HOME =================== -->
+
+<div id="section-home">
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-badge">✦ +2 400 studios référencés en France</div>
+    <h1>Trouvez le studio<br>qui <em>sublimera</em> votre son</h1>
+    <p class="hero-sub">Recherche géolocalisée, réservation en temps réel, paiement sécurisé. Les meilleurs studios professionnels à portée de main.</p>
+    <div class="search-wrap">
+      <div class="search-bar">
+        <div class="search-field">
+          <label>Ville ou région</label>
+          <input type="text" placeholder="Paris, Lyon, Marseille..." id="heroCity">
+        </div>
+        <div class="search-divider"></div>
+        <div class="search-field">
+          <label>Type de session</label>
+          <select id="heroType">
+            <option value="">Tous types</option>
+            <option value="Enregistrement">Enregistrement vocal</option>
+            <option value="Production">Production musicale</option>
+            <option value="Mixage">Mixage / Mastering</option>
+            <option value="Podcast">Podcast / Voice over</option>
+            <option value="Live">Live band</option>
+          </select>
+        </div>
+        <div class="search-divider"></div>
+        <div class="search-field">
+          <label>Budget / heure</label>
+          <select id="heroBudget">
+            <option value="">Tous budgets</option>
+            <option value="30">Moins de 30€/h</option>
+            <option value="80">30€ – 80€/h</option>
+            <option value="150">80€ – 150€/h</option>
+            <option value="999">150€+/h</option>
+          </select>
+        </div>
+        <button class="btn-search" onclick="heroSearch()">🔍 Rechercher</button>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><strong>2 417</strong><span>Studios actifs</span></div>
+      <div class="stat-sep"></div>
+      <div class="stat"><strong>8 900+</strong><span>Réservations / mois</span></div>
+      <div class="stat-sep"></div>
+      <div class="stat"><strong>4.8 ★</strong><span>Note moyenne</span></div>
+      <div class="stat-sep"></div>
+      <div class="stat"><strong>650+</strong><span>Ingénieurs certifiés</span></div>
+    </div>
+  </div>
+  <div class="ad-banner">
+    <span class="ad-tag">Sponsorisé</span>
+    <div><strong>Focusrite Scarlett 4th Gen</strong> — Jusqu'à -30% pour les studios partenaires StudioBook. Interface audio #1 mondiale.</div>
+    <button class="ad-cta" onclick="showToast('🎸','Offre partenaire Focusrite !')">Voir l'offre</button>
+  </div>
+  <div class="partner-section">
+    <div class="partner-head"><h3>Partenaires & Sponsors officiels</h3></div>
+    <div class="partner-logos">
+      <span class="partner-logo">Focusrite</span>
+      <span class="partner-logo">Neve</span>
+      <span class="partner-logo">Pro Tools</span>
+      <span class="partner-logo">Neumann</span>
+      <span class="partner-logo">Universal Audio</span>
+      <span class="partner-logo">Ableton</span>
+      <span class="partner-logo">Sennheiser</span>
+      <span class="partner-logo">SSL</span>
+    </div>
+  </div>
+</div>
+
+<!-- =================== STUDIOS =================== -->
+
+<div id="section-studios" style="display:none;">
+  <section>
+    <div class="section-head">
+      <div>
+        <h2>Studios disponibles</h2>
+        <p id="searchSummaryText">Tous les studios · Triés par pertinence</p>
+      </div>
+      <button class="see-all" onclick="showSection('home')">← Retour accueil</button>
+    </div>
+
+```
+<!-- FILTRES FONCTIONNELS -->
+<div class="filters" id="filterChips">
+  <div class="filter-chip active" data-filter="all" onclick="applyFilter(this)">Tous</div>
+  <div class="filter-chip" data-filter="Enregistrement" onclick="applyFilter(this)">🎤 Enregistrement</div>
+  <div class="filter-chip" data-filter="Mixage" onclick="applyFilter(this)">🎛 Mixage</div>
+  <div class="filter-chip" data-filter="Production" onclick="applyFilter(this)">🎹 Production</div>
+  <div class="filter-chip" data-filter="Mastering" onclick="applyFilter(this)">🎙 Mastering</div>
+  <div class="filter-chip" data-filter="Live" onclick="applyFilter(this)">🎸 Live</div>
+  <div class="filter-chip" data-filter="Podcast" onclick="applyFilter(this)">🎧 Podcast</div>
+  <div class="filter-chip" data-filter="top" onclick="applyFilter(this)">⭐ Top rated</div>
+  <div class="filter-chip" data-filter="budget" onclick="applyFilter(this)">💰 &lt; 50€/h</div>
+  <div class="filter-chip" data-filter="dispo" onclick="applyFilter(this)">✅ Disponible</div>
+</div>
+
+<!-- SEARCH + SORT BAR -->
+<div class="studio-search-bar">
+  <input type="text" class="studio-search-input" id="studioSearchInput" placeholder="Rechercher par nom, ville, équipement..." oninput="applyAllFilters()">
+  <select class="sort-select" id="sortSelect" onchange="applyAllFilters()">
+    <option value="relevance">Pertinence</option>
+    <option value="price_asc">Prix croissant</option>
+    <option value="price_desc">Prix décroissant</option>
+    <option value="rating">Meilleures notes</option>
+  </select>
+</div>
+<div class="results-count" id="resultsCount">Affichage de <span>6</span> studios</div>
+
+<div class="sponsored-label">Annonces sponsorisées</div>
+<div class="sponsored-card" onclick="openStudio(0)">
+  <div class="sponsored-icon">🏆</div>
+  <div class="sponsored-content">
+    <div class="sponsored-name">Galaxy Sound Studios — Paris 10e</div>
+    <div class="sponsored-desc">Console SSL 4000, isolation acoustique professionnelle · Disponible dès maintenant</div>
+    <div class="sponsored-cta">Réserver une session →</div>
+  </div>
+  <span class="sponsor-tag">Sponsorisé</span>
+</div>
+
+<div class="studio-grid" id="studioGrid"></div>
+<div class="no-results" id="noResults" style="display:none;">
+  <h3>🎙 Aucun studio trouvé</h3>
+  <p>Essayez d'autres filtres ou une recherche différente</p>
+</div>
+```
+
+  </section>
+
+  <!-- CARTE LEAFLET -->
+
+  <div class="map-section">
+    <div class="section-head" style="padding:0 0 24px;">
+      <div><h2>Carte des studios</h2><p>Cliquez sur un marqueur pour voir les détails</p></div>
+    </div>
+    <div class="map-wrap">
+      <div id="leaflet-map"></div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== ENGINEERS =================== -->
+
+<div id="section-engineers" style="display:none;">
+  <section>
+    <div class="section-head">
+      <div><h2>Ingénieurs du son</h2><p>Des professionnels certifiés pour votre session</p></div>
+      <button class="see-all" onclick="showSection('home')">← Retour accueil</button>
+    </div>
+    <div class="engineer-grid" id="engineerGrid"></div>
+  </section>
+</div>
+
+<!-- =================== PRICING =================== -->
+
+<div id="section-pricing" style="display:none;">
+  <section>
+    <div class="section-head">
+      <div><h2>Grilles tarifaires</h2><p>Pour les studios souhaitant rejoindre la plateforme</p></div>
+      <button class="see-all" onclick="showSection('home')">← Retour accueil</button>
+    </div>
+    <div class="nav-tabs">
+      <div class="nav-tab active" onclick="switchTab(this,'tab-studio')">🎙 Pour les Studios</div>
+      <div class="nav-tab" onclick="switchTab(this,'tab-artist')">🎤 Pour les Artistes</div>
+      <div class="nav-tab" onclick="switchTab(this,'tab-partner')">🤝 Partenaires publicitaires</div>
+    </div>
+    <div id="tab-studio"><div class="pricing-grid" id="pricingGrid"></div></div>
+    <div id="tab-artist" style="display:none;"><div class="pricing-grid" id="artistPricingGrid"></div></div>
+    <div id="tab-partner" style="display:none;"><div class="pricing-grid" id="partnerPricingGrid"></div></div>
+  </section>
+</div>
+
+<!-- =================== MONETIZATION =================== -->
+
+<div id="section-monetization" style="display:none;">
+  <div class="revenue-section">
+    <section style="padding:0 0 48px;">
+      <div class="section-head">
+        <div><h2>💰 Vos revenus StudioBook</h2><p>Dashboard de monétisation — mois en cours</p></div>
+        <button class="see-all" onclick="showSection('home')">← Retour accueil</button>
+      </div>
+      <div class="revenue-grid">
+        <div class="rev-card"><div class="rev-label">Commissions réservations</div><div class="rev-val">12 840€</div><div class="rev-change up">↑ +18%</div></div>
+        <div class="rev-card"><div class="rev-label">Revenus publicitaires</div><div class="rev-val">4 210€</div><div class="rev-change up">↑ +34%</div></div>
+        <div class="rev-card"><div class="rev-label">Abonnements studios</div><div class="rev-val">6 750€</div><div class="rev-change up">↑ +12%</div></div>
+        <div class="rev-card"><div class="rev-label">Total estimé / mois</div><div class="rev-val">23 800€</div><div class="rev-change up">↑ +22%</div></div>
+      </div>
+      <div class="revenue-streams">
+        <div class="stream-card">
+          <h4>📊 Sources de revenus</h4>
+          <div class="stream-item"><div class="stream-icon">💳</div><div class="stream-details"><div class="stream-name">Commission réservations</div><div class="stream-desc">12% par transaction</div><div class="stream-bar-wrap"><div class="stream-bar" style="width:54%"></div></div></div><div class="stream-pct">54%</div></div>
+          <div class="stream-item"><div class="stream-icon">📢</div><div class="stream-details"><div class="stream-name">Display publicitaire (CPM/CPC)</div><div class="stream-desc">Bannières, cartes sponsorisées</div><div class="stream-bar-wrap"><div class="stream-bar" style="width:18%"></div></div></div><div class="stream-pct">18%</div></div>
+          <div class="stream-item"><div class="stream-icon">⭐</div><div class="stream-details"><div class="stream-name">Abonnements Premium</div><div class="stream-desc">Visibilité boostée, analytics</div><div class="stream-bar-wrap"><div class="stream-bar" style="width:28%"></div></div></div><div class="stream-pct">28%</div></div>
+        </div>
+        <div class="stream-card">
+          <h4>🤝 Partenariats actifs</h4>
+          <div class="stream-item"><div class="stream-icon">🎛</div><div class="stream-details"><div class="stream-name">Focusrite — Affiliate</div><div class="stream-desc">8% commission</div><div class="stream-bar-wrap"><div class="stream-bar" style="width:40%"></div></div></div><div class="stream-pct">840€</div></div>
+          <div class="stream-item"><div class="stream-icon">🎹</div><div class="stream-details"><div class="stream-name">Ableton — Bannière header</div><div class="stream-desc">CPM × 280k impressions</div><div class="stream-bar-wrap"><div class="stream-bar" style="width:30%"></div></div></div><div class="stream-pct">1 120€</div></div>
+          <div class="stream-item"><div class="stream-icon">🎙</div><div class="stream-details"><div class="stream-name">Neumann — Article sponsorisé</div><div class="stream-desc">Content marketing mensuel</div><div class="stream-bar-wrap"><div class="stream-bar" style="width:20%"></div></div></div><div class="stream-pct">750€</div></div>
+          <div class="stream-item"><div class="stream-icon">☁️</div><div class="stream-details"><div class="stream-name">Pro Tools — Bundle artiste</div><div class="stream-desc">15% rev share</div><div class="stream-bar-wrap"><div class="stream-bar" style="width:35%"></div></div></div><div class="stream-pct">1 500€</div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- =================== MODAL STUDIO =================== -->
+
+<div class="modal-overlay" id="studioModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-hero" id="modalHero">
+      <span id="modalEmoji" style="position:relative;z-index:1;">🎙</span>
+      <div class="modal-hero-overlay"></div>
+      <div class="modal-hero-content">
+        <h2 id="modalName">Studio Name</h2>
+        <p id="modalLocation">📍 Ville</p>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-info-section">
+        <div class="info-block"><h4>À propos du studio</h4><p id="modalDesc" style="font-size:14px;color:var(--text2);line-height:1.7;"></p></div>
+        <div class="info-block"><h4>Équipements</h4><div class="equip-list" id="modalEquip"></div></div>
+        <div class="info-block"><h4>Spécialités musicales</h4><div class="card-tags" id="modalTags"></div></div>
+        <div class="info-block"><h4>Ingénieurs disponibles</h4><div id="modalEngineers"></div></div>
+        <div class="info-block"><h4>Avis clients</h4><div id="modalReviews"></div></div>
+      </div>
+      <div>
+        <div class="booking-panel">
+          <h3>Réserver ce studio</h3>
+          <p class="booking-price-line">À partir de <strong id="modalPrice">60€</strong>/heure</p>
+          <div class="form-group"><label>Sélectionner une date</label><div class="calendar-grid" id="calendarGrid"></div></div>
+          <div class="form-group"><label>Créneaux disponibles</label><div class="time-slots" id="timeSlots"></div></div>
+          <div class="form-group">
+            <label>Durée de session</label>
+            <select id="sessionDuration" onchange="updateSummary()">
+              <option value="1">1 heure</option>
+              <option value="2">2 heures</option>
+              <option value="3">3 heures</option>
+              <option value="4">4 heures (demi-journée)</option>
+              <option value="8">8 heures (journée)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Ingénieur du son</label>
+            <select id="engineerSelect" onchange="updateSummary()">
+              <option value="0">Sans ingénieur (studio seul)</option>
+              <option value="45">Marc D. — +45€/h (Hip-Hop / Trap)</option>
+              <option value="60">Sarah L. — +60€/h (Pop / R&B)</option>
+              <option value="55">Thomas G. — +55€/h (Rock / Metal)</option>
+            </select>
+          </div>
+          <div class="booking-summary" id="bookingSummary"></div>
+          <button class="btn-reserve" id="btnReserve" onclick="proceedToPayment()">💳 Réserver & Payer</button>
+          <p class="secure-note">🔒 Paiement sécurisé · Remboursement 48h avant</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== STRIPE MODAL =================== -->
+
+<div class="stripe-overlay" id="stripeOverlay">
+  <div class="stripe-modal">
+    <div class="stripe-header">
+      <h3>💳 Paiement sécurisé</h3>
+      <button class="stripe-close" onclick="closeStripe()">✕</button>
+    </div>
+    <div class="stripe-amount-block">
+      <div>
+        <div class="stripe-amount-label" id="stripeLabel">Réservation studio</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;" id="stripeDetails">1h · Galaxy Sound Studios</div>
+      </div>
+      <div class="stripe-amount-val" id="stripeAmount">60€</div>
+    </div>
+    <div class="stripe-card-icons">
+      <span class="stripe-card-icon">VISA</span>
+      <span class="stripe-card-icon">MC</span>
+      <span class="stripe-card-icon">AMEX</span>
+      <span class="stripe-card-icon">CB</span>
+    </div>
+    <div class="stripe-form-group">
+      <label>Titulaire de la carte</label>
+      <input class="stripe-input" id="cardName" type="text" placeholder="Jean Dupont">
+    </div>
+    <div class="stripe-form-group">
+      <label>Numéro de carte</label>
+      <input class="stripe-input" id="cardNumber" type="text" placeholder="4242 4242 4242 4242" maxlength="19" oninput="formatCard(this)">
+    </div>
+    <div class="stripe-row">
+      <div class="stripe-form-group">
+        <label>Date d'expiration</label>
+        <input class="stripe-input" id="cardExpiry" type="text" placeholder="MM/AA" maxlength="5" oninput="formatExpiry(this)">
+      </div>
+      <div class="stripe-form-group">
+        <label>CVV</label>
+        <input class="stripe-input" id="cardCvv" type="text" placeholder="123" maxlength="3">
+      </div>
+    </div>
+    <div class="stripe-form-group">
+      <label>Email de confirmation</label>
+      <input class="stripe-input" id="paymentEmail" type="email" placeholder="votre@email.com">
+    </div>
+    <button class="btn-pay" id="btnPay" onclick="processPayment()">
+      <span id="payBtnText">🔒 Payer <span id="payAmount">60€</span></span>
+    </button>
+    <p class="stripe-secure">🔒 Paiement chiffré SSL · Vos données sont protégées</p>
+    <p class="stripe-powered">Propulsé par <span>Stripe</span></p>
+  </div>
+</div>
+
+<!-- =================== AUTH MODAL =================== -->
+
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-modal">
+    <button class="auth-close" onclick="closeAuth()">✕</button>
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Se connecter</div>
+      <div class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">S'inscrire</div>
+    </div>
+
+```
+<!-- LOGIN -->
+<div id="loginForm">
+  <div class="auth-header">
+    <h3>Bon retour 👋</h3>
+    <p>Connectez-vous à votre compte StudioBook</p>
+  </div>
+  <div class="auth-error" id="loginError"></div>
+  <div class="auth-form-group"><label>Email</label><input class="auth-input" id="loginEmail" type="email" placeholder="votre@email.com"></div>
+  <div class="auth-form-group"><label>Mot de passe</label><input class="auth-input" id="loginPassword" type="password" placeholder="••••••••"></div>
+  <button class="btn-auth" onclick="doLogin()">Se connecter</button>
+  <div class="auth-divider">ou</div>
+  <button class="btn-social" onclick="socialLogin('Google')">🔵 Continuer avec Google</button>
+  <button class="btn-social" onclick="socialLogin('Apple')">⚫ Continuer avec Apple</button>
+</div>
+
+<!-- REGISTER -->
+<div id="registerForm" style="display:none;">
+  <div class="auth-header">
+    <h3>Créer un compte 🎙</h3>
+    <p>Rejoignez la communauté StudioBook</p>
+  </div>
+  <div class="auth-error" id="registerError"></div>
+  <div class="auth-form-group"><label>Prénom & Nom</label><input class="auth-input" id="regName" type="text" placeholder="Jean Dupont"></div>
+  <div class="auth-form-group"><label>Email</label><input class="auth-input" id="regEmail" type="email" placeholder="votre@email.com"></div>
+  <div class="auth-form-group"><label>Mot de passe</label><input class="auth-input" id="regPassword" type="password" placeholder="Min. 8 caractères"></div>
+  <div class="auth-form-group">
+    <label>Vous êtes</label>
+    <div class="auth-role-select">
+      <div class="role-card selected" id="roleArtist" onclick="selectRole('artist')"><span>🎤</span><p>Artiste</p></div>
+      <div class="role-card" id="roleStudio" onclick="selectRole('studio')"><span>🎙</span><p>Studio</p></div>
+    </div>
+  </div>
+  <button class="btn-auth" onclick="doRegister()">Créer mon compte</button>
+  <div class="auth-divider">ou</div>
+  <button class="btn-social" onclick="socialLogin('Google')">🔵 Continuer avec Google</button>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- TOAST -->
+
+<div class="toast" id="toast"><span class="toast-icon" id="toastIcon">✅</span><span id="toastMsg">Message</span></div>
+
+<!-- FOOTER -->
+
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="logo">🎙 Studio<span>Book</span></div>
+      <p>La première marketplace française dédiée aux studios d'enregistrement professionnels. Trouvez, comparez, réservez.</p>
+    </div>
+    <div class="footer-col">
+      <h5>Plateforme</h5>
+      <a onclick="showSection('studios')">Trouver un studio</a>
+      <a onclick="showSection('engineers')">Ingénieurs du son</a>
+      <a onclick="showSection('pricing')">Tarifs & abonnements</a>
+      <a>Carte interactive</a>
+    </div>
+    <div class="footer-col">
+      <h5>Studios</h5>
+      <a onclick="openAuth('register')">Référencer mon studio</a>
+      <a>Gestion du planning</a>
+      <a>Analytics avancés</a>
+      <a>Support studios</a>
+    </div>
+    <div class="footer-col">
+      <h5>Entreprise</h5>
+      <a>À propos</a>
+      <a>Publicité & sponsors</a>
+      <a>Mentions légales</a>
+      <a>CGU / RGPD</a>
+      <a>Contact</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 StudioBook SAS · Tous droits réservés · Fait avec ♥ en France</p>
+    <div class="footer-socials">
+      <button class="social-btn" onclick="showToast('📸','Instagram StudioBook')">📸</button>
+      <button class="social-btn" onclick="showToast('🐦','Twitter StudioBook')">🐦</button>
+      <button class="social-btn" onclick="showToast('💼','LinkedIn StudioBook')">💼</button>
+      <button class="social-btn" onclick="showToast('▶️','YouTube StudioBook')">▶️</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════
+const studios = [
+  { name:"Galaxy Sound Studios", location:"Paris 10e, Île-de-France", city:"Paris", badge:"Partenaire Gold", desc:"Studio flagship équipé d'une console SSL 4000E, isolation phonique parfaite, 3 cabines de prise. Références : Universal Music, Warner France.", tags:["Hip-Hop","R&B","Pop","Afro","Enregistrement"], rating:4.9, reviews:187, price:95, avail:true, equip:["SSL 4000E","Pro Tools HDX","Neve 1073","Neumann U87","ATC SCM45A","Lexicon 480L"], emoji:"🎙", lat:48.8726, lng:2.3658, engineers:["Marc Dubois","Sarah Lambert"], reviewList:[{user:"Naza",rating:5,text:"Son impeccable, console SSL de rêve."},{user:"Awa",rating:5,text:"Équipe pro, résultat top !"}] },
+  { name:"The Red Room", location:"Lyon 2e, Auvergne-Rhône-Alpes", city:"Lyon", badge:"Certifié Dolby", desc:"Spécialisé rock, metal & productions orchestrales. Grande salle live avec isolation renforcée. Acoustique Wilson Acoustics.", tags:["Rock","Metal","Orchestral","Live"], rating:4.8, reviews:94, price:75, avail:true, equip:["Neve 8078","Pro Tools Ultimate","AKG C414","DW Kit","Marshall Stack"], emoji:"🔴", lat:45.7558, lng:4.8320, engineers:["Thomas Girard"], reviewList:[{user:"Babysham",rating:5,text:"Son rock authentique, super live room."},{user:"Prod-X",rating:4,text:"Très bon rapport qualité/prix."}] },
+  { name:"Studio Azur", location:"Marseille 13e, PACA", city:"Marseille", badge:null, desc:"Studio intimiste parfait pour rap, trap & productions urbaines. Interface Focusrite Clarett+ et setup Mac Pro M2.", tags:["Rap","Trap","Drill","Afrobeat","Enregistrement"], rating:4.6, reviews:52, price:45, avail:true, equip:["Focusrite Clarett+ 8Pre","Logic Pro X","Shure SM7B","Yamaha HS8"], emoji:"🌊", lat:43.2965, lng:5.3698, engineers:[], reviewList:[{user:"Soolking",rating:5,text:"Cadre parfait pour enregistrer."},{user:"Maska",rating:4,text:"Prix super accessible, qualité au rdv."}] },
+  { name:"Château Son", location:"Bordeaux Chartrons, Nouvelle-Aquitaine", city:"Bordeaux", badge:"Top Mastering", desc:"Référence française du mastering haute résolution. Monitoring de précision, acoustique traitée par Quested et diffusion Atmos.", tags:["Mastering","Mixage","Jazz","Électronique"], rating:4.9, reviews:143, price:120, avail:false, equip:["Quested V3110","Prism ADA-8XR","iZotope Ozone","Dangerous Audio Master"], emoji:"🏰", lat:44.8378, lng:-0.5792, engineers:["Olivier Petit","Emma Vasquez"], reviewList:[{user:"Fakear",rating:5,text:"Le meilleur mastering de France."},{user:"Zaho de Sagazan",rating:5,text:"Rendu exceptionnel."}] },
+  { name:"NordSound Lab", location:"Lille Vieux-Lille, Hauts-de-France", city:"Lille", badge:"Podcast Pro", desc:"Studio multi-usage idéal pour podcast, voice-over, jingles radio. Setup triple micro, mixage live possible.", tags:["Podcast","Voice-over","Radio","Production"], rating:4.5, reviews:31, price:30, avail:true, equip:["Rode NT1","Universal Audio Apollo x8","RodeCaster Pro II","Adobe Audition"], emoji:"🎧", lat:50.6292, lng:3.0573, engineers:["Julien Martin"], reviewList:[{user:"France 3 Nord",rating:5,text:"Parfait pour nos productions radio."}] },
+  { name:"Studio Soleil", location:"Toulouse Carmes, Occitanie", city:"Toulouse", badge:null, desc:"Ambiance chaleureuse, idéal pour enregistrements acoustiques, folk, indie. Console API et micros ruban vintage.", tags:["Folk","Indie","Acoustique","Enregistrement"], rating:4.7, reviews:68, price:55, avail:true, equip:["API 1608","Coles 4038 Ribbon","Bock Audio 195","Barefoot Footprint01"], emoji:"☀️", lat:43.6047, lng:1.4442, engineers:["Camille Roy"], reviewList:[{user:"Clara Luciani",rating:5,text:"Son chaleureux, ingénieure au top."}] }
+];
+
+const engineers = [
+  { name:"Marc Dubois", title:"Head Engineer", studio:"Galaxy Sound Studios", bio:"15 ans d'expérience. A travaillé avec Naza, Vegedream, Tayc. Spécialiste des basses trap et de la compression hip-hop.", skills:["Hip-Hop","Trap","R&B","Afrobeat"], xp:"15 ans", rate:"45€/h", avatar:"🎛", color:"#1c2a1c" },
+  { name:"Sarah Lambert", title:"Mix & Mastering", studio:"Galaxy Sound Studios", bio:"Ingénieure certifiée Dolby Atmos. Références en production pop internationale et mastering haute définition.", skills:["Pop","R&B","Soul","Atmos"], xp:"10 ans", rate:"60€/h", avatar:"🎚", color:"#1c1c2a" },
+  { name:"Thomas Girard", title:"Live Recording", studio:"The Red Room", bio:"Ancien tech de tournée Metallica. Spécialiste du son rock et des prises live en grande salle.", skills:["Rock","Metal","Punk","Prog"], xp:"18 ans", rate:"55€/h", avatar:"🎸", color:"#2a1c1c" },
+  { name:"Emma Vasquez", title:"Mastering Engineer", studio:"Château Son", bio:"Masterisé 400+ albums, dont des sorties Platinum en France. Spécialiste loudness streaming.", skills:["Mastering","Jazz","Électronique","World"], xp:"12 ans", rate:"80€/h", avatar:"💎", color:"#1c2228" },
+  { name:"Julien Martin", title:"Voice & Podcast", studio:"NordSound Lab", bio:"Réalisateur de podcasts pour France Inter, BFM, M6. Expert en montage audio et direction d'acteurs.", skills:["Podcast","Voice-over","Radio","Pub"], xp:"8 ans", rate:"35€/h", avatar:"🎙", color:"#221c28" },
+  { name:"Camille Roy", title:"Acoustic Specialist", studio:"Studio Soleil", bio:"Ingénieure folk & acoustique formée à la FEMIS. Productrice indépendante, spécialiste micros ruban vintage.", skills:["Folk","Indie","Acoustique","Classique"], xp:"9 ans", rate:"40€/h", avatar:"🌿", color:"#1c2219" }
+];
+
+const pricingPlans = [
+  { name:"Starter", price:"0", per:"Gratuit", popular:false, features:["1 studio listé","5 photos","Calendrier basique","Paiement en ligne","Support email"], noFeatures:["Badge vérifié","Analytics avancés","Remontée sponsorisée","API partenaires","Manager dédié"] },
+  { name:"Pro", price:"49", per:"/ mois", popular:true, features:["Studios illimités","30 photos + vidéo","Calendrier avancé","Paiement en ligne","Badge vérifié ✓","Analytics détaillés","Support prioritaire","Remontée ×3"], noFeatures:["API partenaires","Manager dédié"] },
+  { name:"Enterprise", price:"149", per:"/ mois", popular:false, features:["Studios illimités","Médias illimités","Planning multi-salles","Intégration API","Badge vérifié ✓","Analytics temps réel","Manager dédié","Remontée ×10","Accès publicité partenaires"] }
+];
+const artistPricing = [
+  { name:"Découverte", price:"0", per:"Gratuit", popular:false, features:["Recherche de studios","Réservation basique","Paiement sécurisé","Historique 30 jours"], noFeatures:["Remises exclusives","Accès avant-première","Profil artiste public","Concierge musique"] },
+  { name:"Artiste", price:"9", per:"/ mois", popular:true, features:["Tout Découverte","Remises -10%","Accès avant-première","Profil artiste public","Historique illimité","Support prioritaire"], noFeatures:["Concierge musique"] },
+  { name:"Label", price:"29", per:"/ mois", popular:false, features:["Tout Artiste","Remises -20%","Multi-artistes","Concierge musique","Facturation consolidée","API label"] }
+];
+const partnerPricing = [
+  { name:"CPM Display", price:"8", per:"/ 1000 impr.", popular:false, features:["Bannières header & footer","Ciblage géo France","280k+ impressions/mois","Rapport mensuel"], noFeatures:["Cartes sponsorisées","Emailing","Content"] },
+  { name:"Studio Partner", price:"299", per:"/ mois", popular:true, features:["Carte sponsorisée top","Emailing 45k artistes","Badge partenaire","Article sponsorisé","Rapport ROI hebdo","Analytics"], noFeatures:[] },
+  { name:"Premium Brand", price:"990", per:"/ mois", popular:false, features:["Header exclusif","Emailing illimité","Brand page dédiée","Contenu co-brandé","Account manager","Analytics temps réel"] }
+];
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let currentFilter = 'all';
+let currentSearch = '';
+let currentSort = 'relevance';
+let currentHeroCity = '';
+let currentHeroType = '';
+let currentHeroBudget = '';
+let currentStudioIdx = 0;
+let currentStudioPrice = 60;
+let selectedDay = null;
+let selectedTime = null;
+let currentUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
+let selectedRole = 'artist';
+let leafletMap = null;
+let leafletMarkers = [];
+let totalAmount = 0;
+let currentStudioName = '';
+
+// ═══════════════════════════════════════════════════════
+// FILTRES FONCTIONNELS
+// ═══════════════════════════════════════════════════════
+function applyFilter(el) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  currentFilter = el.dataset.filter;
+  applyAllFilters();
+}
+
+function applyAllFilters() {
+  currentSearch = document.getElementById('studioSearchInput').value.toLowerCase().trim();
+  currentSort = document.getElementById('sortSelect').value;
+
+  let filtered = studios.filter((s, i) => {
+    // filtre chip
+    if (currentFilter === 'all') {}
+    else if (currentFilter === 'top') { if (s.rating < 4.8) return false; }
+    else if (currentFilter === 'budget') { if (s.price >= 50) return false; }
+    else if (currentFilter === 'dispo') { if (!s.avail) return false; }
+    else { if (!s.tags.some(t => t.toLowerCase().includes(currentFilter.toLowerCase()))) return false; }
+
+    // filtre hero city
+    if (currentHeroCity && !s.city.toLowerCase().includes(currentHeroCity.toLowerCase()) && !s.location.toLowerCase().includes(currentHeroCity.toLowerCase())) return false;
+
+    // filtre hero type
+    if (currentHeroType && !s.tags.some(t => t.toLowerCase().includes(currentHeroType.toLowerCase()))) return false;
+
+    // filtre hero budget
+    if (currentHeroBudget) {
+      const b = parseInt(currentHeroBudget);
+      if (b === 30 && s.price >= 30) return false;
+      if (b === 80 && (s.price < 30 || s.price > 80)) return false;
+      if (b === 150 && (s.price < 80 || s.price > 150)) return false;
+      if (b === 999 && s.price <= 150) return false;
+    }
+
+    // filtre texte
+    if (currentSearch) {
+      const hay = (s.name + s.location + s.desc + s.tags.join(' ') + s.equip.join(' ')).toLowerCase();
+      if (!hay.includes(currentSearch)) return false;
+    }
+
+    return true;
+  }).map((s, _, arr) => ({ ...s, origIdx: studios.indexOf(s) }));
+
+  // TRI
+  if (currentSort === 'price_asc') filtered.sort((a, b) => a.price - b.price);
+  else if (currentSort === 'price_desc') filtered.sort((a, b) => b.price - a.price);
+  else if (currentSort === 'rating') filtered.sort((a, b) => b.rating - a.rating);
+
+  renderFilteredStudios(filtered);
+  updateMapMarkers(filtered);
+
+  // update count
+  const c = document.getElementById('resultsCount');
+  if(c) c.innerHTML = `Affichage de <span>${filtered.length}</span> studio${filtered.length !== 1 ? 's' : ''}`;
+}
+
+function renderFilteredStudios(list) {
+  const grid = document.getElementById('studioGrid');
+  const noRes = document.getElementById('noResults');
+  if (!list.length) {
+    grid.innerHTML = '';
+    noRes.style.display = 'block';
+    return;
+  }
+  noRes.style.display = 'none';
+  grid.innerHTML = list.map(s => `
+    <div class="studio-card" onclick="openStudio(${s.origIdx})">
+      <div class="card-img">${s.emoji}
+        ${s.badge ? `<div class="card-badge">${s.badge}</div>` : ''}
+        <div class="card-fav" onclick="event.stopPropagation();toggleFav(this)">🤍</div>
+        <div class="card-avail" style="${s.avail ? '' : 'background:rgba(224,82,82,.85);color:#2a0a0a;'}">${s.avail ? 'Disponible' : 'Complet'}</div>
+      </div>
+      <div class="card-body">
+        <div class="card-location">📍 ${s.location}</div>
+        <div class="card-name">${s.name}</div>
+        <div class="card-desc">${s.desc.substring(0,90)}...</div>
+        <div class="card-tags">${s.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+        <div class="card-footer">
+          <div class="card-rating"><span class="stars">★★★★★</span><strong>${s.rating}</strong><span class="rating-count">(${s.reviews})</span></div>
+          <div class="card-price"><div class="price-from">À partir de</div><div><span class="price-val">${s.price}€</span><span class="price-unit">/h</span></div></div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// HERO SEARCH
+// ═══════════════════════════════════════════════════════
+function heroSearch() {
+  currentHeroCity = document.getElementById('heroCity').value.trim();
+  currentHeroType = document.getElementById('heroType').value;
+  currentHeroBudget = document.getElementById('heroBudget').value;
+  showSection('studios');
+  // Update summary text
+  let parts = [];
+  if (currentHeroCity) parts.push(currentHeroCity);
+  if (currentHeroType) parts.push(currentHeroType);
+  if (currentHeroBudget) parts.push('Budget filtré');
+  const st = document.getElementById('searchSummaryText');
+  if (st) st.textContent = parts.length ? parts.join(' · ') : 'Tous les studios · Triés par pertinence';
+}
+
+// ═══════════════════════════════════════════════════════
+// CARTE LEAFLET
+// ═══════════════════════════════════════════════════════
+function initMap() {
+  if (leafletMap) return;
+  if (typeof L === 'undefined') {
+    setTimeout(initMap, 200);
+    return;
+  }
+  leafletMap = L.map('leaflet-map').setView([46.8, 2.3], 5);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap · © CARTO',
+    maxZoom: 18
+  }).addTo(leafletMap);
+  addAllMarkers(studios.map((s,i) => ({...s, origIdx:i})));
+}
+
+function addAllMarkers(list) {
+  leafletMarkers.forEach(m => m.remove());
+  leafletMarkers = [];
+  list.forEach(s => {
+    const icon = L.divIcon({
+      html: `<div style="background:var(--gold,#c9a84c);border-radius:50% 50% 50% 0;transform:rotate(-45deg);width:36px;height:36px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(201,168,76,0.5);border:2px solid #0a0a0f;"><span style="transform:rotate(45deg);font-size:16px;">${s.emoji}</span></div>`,
+      className: '',
+      iconSize: [36, 36],
+      iconAnchor: [18, 36],
+      popupAnchor: [0, -38]
+    });
+    const marker = L.marker([s.lat, s.lng], { icon })
+      .addTo(leafletMap)
+      .bindPopup(`
+        <div style="font-family:'DM Sans',sans-serif;min-width:200px;padding:4px;">
+          <div style="font-size:18px;margin-bottom:6px;">${s.emoji}</div>
+          <strong style="font-size:14px;color:#f0f0f8;">${s.name}</strong>
+          <div style="font-size:12px;color:#9898b8;margin:4px 0;">📍 ${s.location}</div>
+          <div style="font-size:13px;color:#c9a84c;font-weight:700;">${s.price}€/h</div>
+          <div style="margin-top:6px;font-size:11px;color:${s.avail ? '#52c093' : '#e05252'}">${s.avail ? '✅ Disponible' : '❌ Complet'}</div>
+          <button onclick="openStudio(${s.origIdx})" style="margin-top:10px;width:100%;padding:7px;background:#c9a84c;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;">Voir & Réserver</button>
+        </div>
+      `, { maxWidth: 260 });
+    leafletMarkers.push(marker);
+  });
+}
+
+function updateMapMarkers(filtered) {
+  if (!leafletMap) return;
+  addAllMarkers(filtered);
+}
+
+// ═══════════════════════════════════════════════════════
+// MODAL STUDIO
+// ═══════════════════════════════════════════════════════
+function openStudio(i) {
+  const s = studios[i];
+  currentStudioIdx = i;
+  currentStudioPrice = s.price;
+  currentStudioName = s.name;
+  document.getElementById('modalName').textContent = s.name;
+  document.getElementById('modalLocation').textContent = '📍 ' + s.location;
+  document.getElementById('modalDesc').textContent = s.desc;
+  document.getElementById('modalPrice').textContent = s.price + '€';
+  document.getElementById('modalEmoji').textContent = s.emoji;
+  document.getElementById('modalEquip').innerHTML = s.equip.map(e => `<span class="equip-item">🔧 ${e}</span>`).join('');
+  document.getElementById('modalTags').innerHTML = s.tags.map(t => `<span class="tag">${t}</span>`).join('');
+  document.getElementById('modalEngineers').innerHTML = s.engineers.length
+    ? s.engineers.map(e => `<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2);">👤 <strong style="color:var(--text)">${e}</strong> — Certifié</div>`).join('')
+    : `<div style="font-size:13px;color:var(--text3);">Studio libre-service.</div>`;
+  document.getElementById('modalReviews').innerHTML = (s.reviewList||[]).map(r => `
+    <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <strong style="font-size:13px;color:var(--text)">${r.user}</strong>
+        <span style="color:var(--gold);font-size:12px;">${'★'.repeat(r.rating)}</span>
+      </div>
+      <div style="font-size:13px;color:var(--text2);">"${r.text}"</div>
+    </div>`).join('');
+  buildCalendar();
+  buildTimeSlots();
+  updateSummary();
+  document.getElementById('studioModal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('studioModal').classList.remove('open'); }
+
+// ═══════════════════════════════════════════════════════
+// CALENDRIER & CRÉNEAUX
+// ═══════════════════════════════════════════════════════
+function buildCalendar() {
+  const grid = document.getElementById('calendarGrid');
+  const today = new Date();
+  const days = ['L','M','M','J','V','S','D'];
+  const bookedDays = [3,7,14,19,22];
+  let html = days.map(d => `<div class="cal-day header">${d}</div>`).join('');
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).getDay();
+  const offset = firstDay === 0 ? 6 : firstDay - 1;
+  for(let i=0;i<offset;i++) html += `<div class="cal-day empty"></div>`;
+  const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+  for(let d=1;d<=daysInMonth;d++){
+    const isPast = d < today.getDate();
+    const isBooked = bookedDays.includes(d);
+    const isToday = d === today.getDate();
+    let cls = 'cal-day ';
+    cls += (isPast || isBooked) ? 'booked' : 'available';
+    if(isToday) cls += ' today';
+    html += `<div class="${cls}" onclick="selectDay(this,${d})">${d}</div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function selectDay(el, day) {
+  document.querySelectorAll('.cal-day.selected').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedDay = day;
+  updateSummary();
+}
+
+function buildTimeSlots() {
+  const slots = ['8h00','9h00','10h00','11h00','14h00','15h00','16h00','17h00','18h00','19h00','20h00','21h00'];
+  const taken = ['9h00','14h00','15h00'];
+  document.getElementById('timeSlots').innerHTML = slots.map(s =>
+    `<div class="time-slot ${taken.includes(s)?'taken':''}" onclick="selectTime(this,'${s}')">${s}</div>`
+  ).join('');
+}
+
+function selectTime(el, time) {
+  document.querySelectorAll('.time-slot.selected').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedTime = time;
+  updateSummary();
+}
+
+function updateSummary() {
+  const dur = parseInt(document.getElementById('sessionDuration')?.value || 1);
+  const engRate = parseInt(document.getElementById('engineerSelect')?.value || 0);
+  const studio = currentStudioPrice * dur;
+  const eng = engRate * dur;
+  const sub = studio + eng;
+  const fee = Math.round(sub * 0.08 * 100) / 100;
+  totalAmount = parseFloat((sub + fee).toFixed(2));
+  let rows = `<div class="summary-row"><span>Studio × ${dur}h</span><span>${studio}€</span></div>`;
+  if (eng > 0) rows += `<div class="summary-row"><span>Ingénieur × ${dur}h</span><span>${eng}€</span></div>`;
+  rows += `<div class="summary-row"><span>Frais de service (8%)</span><span>${fee}€</span></div>`;
+  rows += `<div class="summary-row"><span>Total à payer</span><span>${totalAmount}€</span></div>`;
+  document.getElementById('bookingSummary').innerHTML = rows;
+}
+
+// ═══════════════════════════════════════════════════════
+// STRIPE PAYMENT
+// ═══════════════════════════════════════════════════════
+function proceedToPayment() {
+  if (!selectedDay) { showToast('⚠️','Veuillez sélectionner une date'); return; }
+  if (!selectedTime) { showToast('⚠️','Veuillez sélectionner un créneau'); return; }
+  if (!currentUser) { showToast('🔐','Connectez-vous pour réserver'); openAuth('login'); return; }
+
+  const dur = parseInt(document.getElementById('sessionDuration').value);
+  document.getElementById('stripeLabel').textContent = `Réservation · ${currentStudioName}`;
+  document.getElementById('stripeDetails').textContent = `${dur}h · ${selectedTime} le ${selectedDay} — Ingénieur: ${document.getElementById('engineerSelect').options[document.getElementById('engineerSelect').selectedIndex].text.split(' —')[0]}`;
+  document.getElementById('stripeAmount').textContent = totalAmount + '€';
+  document.getElementById('payAmount').textContent = totalAmount + '€';
+  document.getElementById('paymentEmail').value = currentUser.email || '';
+  document.getElementById('stripeOverlay').classList.add('open');
+}
+
+function closeStripe() { document.getElementById('stripeOverlay').classList.remove('open'); }
+
+function formatCard(el) {
+  let v = el.value.replace(/\D/g,'').substring(0,16);
+  el.value = v.replace(/(.{4})/g,'$1 ').trim();
+}
+function formatExpiry(el) {
+  let v = el.value.replace(/\D/g,'').substring(0,4);
+  if(v.length>=2) v = v.substring(0,2)+'/'+v.substring(2);
+  el.value = v;
+}
+
+function processPayment() {
+  const name = document.getElementById('cardName').value.trim();
+  const num = document.getElementById('cardNumber').value.replace(/\s/g,'');
+  const exp = document.getElementById('cardExpiry').value;
+  const cvv = document.getElementById('cardCvv').value;
+  const email = document.getElementById('paymentEmail').value.trim();
+
+  if(!name||!num||!exp||!cvv||!email){ showToast('⚠️','Remplissez tous les champs'); return; }
+  if(num.length < 16){ showToast('⚠️','Numéro de carte invalide'); return; }
+  if(exp.length < 5){ showToast('⚠️','Date d\'expiration invalide'); return; }
+  if(cvv.length < 3){ showToast('⚠️','CVV invalide'); return; }
+  if(!email.includes('@')){ showToast('⚠️','Email invalide'); return; }
+
+  const btn = document.getElementById('btnPay');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="stripe-spinner"></div>';
+
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.innerHTML = `<span id="payBtnText">🔒 Payer <span id="payAmount">${totalAmount}€</span></span>`;
+    closeStripe();
+    closeModal();
+    showToast('🎉', `Réservation confirmée ! ${selectedTime} le ${selectedDay} — Confirmation envoyée à ${email}`);
+  }, 2200);
+}
+
+// ═══════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════
+function openAuth(tab='login') {
+  switchAuthTab(tab);
+  document.getElementById('authOverlay').classList.add('open');
+}
+function closeAuth() { document.getElementById('authOverlay').classList.remove('open'); }
+
+function switchAuthTab(tab) {
+  document.getElementById('loginForm').style.display = tab==='login' ? '' : 'none';
+  document.getElementById('registerForm').style.display = tab==='register' ? '' : 'none';
+  document.getElementById('tabLogin').classList.toggle('active', tab==='login');
+  document.getElementById('tabRegister').classList.toggle('active', tab==='register');
+}
+
+function selectRole(r) {
+  selectedRole = r;
+  document.getElementById('roleArtist').classList.toggle('selected', r==='artist');
+  document.getElementById('roleStudio').classList.toggle('selected', r==='studio');
+}
+
+function showAuthError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value;
+  if(!email || !pass) { showAuthError('loginError','Remplissez tous les champs.'); return; }
+  if(!email.includes('@')) { showAuthError('loginError','Email invalide.'); return; }
+  if(pass.length < 6) { showAuthError('loginError','Mot de passe trop court.'); return; }
+
+  // Simulation auth (remplacer par Firebase/Supabase)
+  const users = JSON.parse(localStorage.getItem('sb_users') || '[]');
+  const found = users.find(u => u.email === email && u.password === pass);
+  if(!found) { showAuthError('loginError','Email ou mot de passe incorrect.'); return; }
+
+  setUser(found);
+  closeAuth();
+  showToast('👋', `Bon retour, ${found.name} !`);
+}
+
+function doRegister() {
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPassword').value;
+  if(!name||!email||!pass) { showAuthError('registerError','Remplissez tous les champs.'); return; }
+  if(!email.includes('@')) { showAuthError('registerError','Email invalide.'); return; }
+  if(pass.length < 8) { showAuthError('registerError','Mot de passe minimum 8 caractères.'); return; }
+
+  const users = JSON.parse(localStorage.getItem('sb_users') || '[]');
+  if(users.find(u => u.email === email)) { showAuthError('registerError','Cet email est déjà utilisé.'); return; }
+
+  const newUser = { name, email, password: pass, role: selectedRole, createdAt: new Date().toISOString() };
+  users.push(newUser);
+  localStorage.setItem('sb_users', JSON.stringify(users));
+
+  setUser(newUser);
+  closeAuth();
+  showToast('🎉', `Bienvenue, ${name} ! Compte créé avec succès.`);
+}
+
+function socialLogin(provider) {
+  // Simulation sociale (remplacer par OAuth réel)
+  const fakeUser = { name: `Utilisateur ${provider}`, email: `user@${provider.toLowerCase()}.com`, role: 'artist' };
+  setUser(fakeUser);
+  closeAuth();
+  showToast('✅', `Connecté via ${provider}`);
+}
+
+function setUser(user) {
+  currentUser = user;
+  localStorage.setItem('sb_user', JSON.stringify(user));
+  document.getElementById('authButtons').style.display = 'none';
+  document.getElementById('userMenuWrap').style.display = '';
+  const initials = user.name.split(' ').map(n=>n[0]).join('').toUpperCase().substring(0,2);
+  document.getElementById('userAvatar').textContent = initials;
+  document.getElementById('dropdownName').textContent = user.name;
+  document.getElementById('dropdownRole').textContent = user.role === 'studio' ? '🎙 Studio' : '🎤 Artiste';
+}
+
+function logout() {
+  currentUser = null;
+  localStorage.removeItem('sb_user');
+  document.getElementById('authButtons').style.display = '';
+  document.getElementById('userMenuWrap').style.display = 'none';
+  toggleDropdown(true);
+  showToast('👋','Déconnecté avec succès');
+}
+
+function toggleDropdown(forceClose=false) {
+  const dd = document.getElementById('userDropdown');
+  if(forceClose) dd.classList.remove('open');
+  else dd.classList.toggle('open');
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER ENGINEERS & PRICING
+// ═══════════════════════════════════════════════════════
+function renderEngineers() {
+  document.getElementById('engineerGrid').innerHTML = engineers.map(e => `
+    <div class="eng-card">
+      <div class="eng-top">
+        <div class="eng-avatar" style="background:${e.color}">${e.avatar}</div>
+        <div>
+          <div class="eng-name">${e.name}</div>
+          <div class="eng-title">${e.title}</div>
+          <div class="eng-studio-link">@ ${e.studio}</div>
+        </div>
+      </div>
+      <div class="eng-bio">${e.bio}</div>
+      <div class="eng-skills">${e.skills.map(s=>`<span class="eng-skill">${s}</span>`).join('')}</div>
+      <div class="eng-footer"><div class="eng-xp">Expérience : <strong>${e.xp}</strong></div><div class="eng-rate">${e.rate}</div></div>
+    </div>`).join('');
+}
+
+function renderPricing(plans, gridId) {
+  document.getElementById(gridId).innerHTML = plans.map(p => `
+    <div class="price-card ${p.popular?'featured':''}">
+      ${p.popular?'<div class="price-pop">⭐ Le plus populaire</div>':''}
+      <div class="price-name">${p.name}</div>
+      <div class="price-amount"><sup>€</sup>${p.price}</div>
+      <div class="price-per">${p.per}</div>
+      <ul class="price-features">
+        ${p.features.map(f=>`<li>${f}</li>`).join('')}
+        ${(p.noFeatures||[]).map(f=>`<li class="no">${f}</li>`).join('')}
+      </ul>
+      <button class="btn-price" onclick="showToast('${p.popular?'🎉':'✅'}','Abonnement ${p.name} sélectionné !')">Choisir ${p.name}</button>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+function showSection(name) {
+  ['home','studios','engineers','pricing','monetization'].forEach(s => {
+    const el = document.getElementById('section-'+s);
+    if(el) el.style.display = s===name ? '' : 'none';
+  });
+  document.querySelectorAll('nav a').forEach(a => {
+    a.classList.toggle('active', a.dataset.section === name);
+  });
+  window.scrollTo({top:0, behavior:'smooth'});
+
+  if(name === 'studios') {
+    applyAllFilters();
+    setTimeout(() => { initMap(); }, 300);
+  }
+  if(name === 'engineers') renderEngineers();
+  if(name === 'pricing') {
+    renderPricing(pricingPlans, 'pricingGrid');
+    renderPricing(artistPricing, 'artistPricingGrid');
+    renderPricing(partnerPricing, 'partnerPricingGrid');
+  }
+}
+
+function switchTab(el, tabId) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['tab-studio','tab-artist','tab-partner'].forEach(id => {
+    document.getElementById(id).style.display = id===tabId ? '' : 'none';
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════
+function toggleFav(el) {
+  el.textContent = el.textContent === '🤍' ? '❤️' : '🤍';
+  showToast('❤️','Studio ajouté à vos favoris');
+}
+
+function toggleMobileNav() {
+  document.getElementById('hamburger').classList.toggle('open');
+  document.getElementById('mobileNav').classList.toggle('open');
+}
+function closeMobileNav() {
+  document.getElementById('hamburger').classList.remove('open');
+  document.getElementById('mobileNav').classList.remove('open');
+}
+
+let toastTimer;
+function showToast(icon, msg) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toastIcon').textContent = icon;
+  document.getElementById('toastMsg').textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+}
+
+// Close on overlay click
+document.getElementById('studioModal').addEventListener('click', e => { if(e.target===document.getElementById('studioModal')) closeModal(); });
+document.getElementById('stripeOverlay').addEventListener('click', e => { if(e.target===document.getElementById('stripeOverlay')) closeStripe(); });
+document.getElementById('authOverlay').addEventListener('click', e => { if(e.target===document.getElementById('authOverlay')) closeAuth(); });
+document.addEventListener('click', e => {
+  if(!e.target.closest('.user-menu')) document.getElementById('userDropdown')?.classList.remove('open');
+});
+
+// ── INIT ──
+if(currentUser) setUser(currentUser);
+showSection('home');
+
+// Leaflet chargé dynamiquement pour éviter ReferenceError
+(function loadLeaflet() {
+  const s = document.createElement('script');
+  s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  s.onload = () => { window._leafletReady = true; };
+  document.body.appendChild(s);
+})();
+</script>
+
+</body>
+</html>
