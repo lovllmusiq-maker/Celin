@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOVLL – Architecture Multi-Agents</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&family=Syne:wght@400;700;800&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+–bg:#060810;
+–surface:#0c0f1a;
+–border:#1a1f35;
+–gold:#c9a84c;
+–gold2:#e8d5a3;
+–cyan:#00d4ff;
+–violet:#7c3aed;
+–green:#00ff88;
+–red:#ff4d6d;
+–orange:#ff8c42;
+–blue:#3b82f6;
+–mono:‘JetBrains Mono’,monospace;
+–display:‘Syne’,sans-serif;
+}
+
+html,body{width:100%;height:100%;background:var(–bg);color:#e2e8f0;font-family:var(–mono);overflow:hidden}
+
+/* ── CANVAS LAYER ── */
+#canvas{position:fixed;inset:0;z-index:0}
+
+/* ── HEADER ── */
+.hdr{
+position:fixed;top:0;left:0;right:0;z-index:10;
+display:flex;align-items:center;justify-content:space-between;
+padding:1rem 2rem;
+background:rgba(6,8,16,.85);
+backdrop-filter:blur(12px);
+border-bottom:1px solid var(–border);
+}
+.hdr-logo{font-family:var(–display);font-size:1.2rem;font-weight:800;color:var(–gold);letter-spacing:.08em}
+.hdr-title{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:#64748b}
+.hdr-status{display:flex;align-items:center;gap:.6rem;font-size:.7rem;color:var(–green)}
+.pulse-dot{width:7px;height:7px;border-radius:50%;background:var(–green);animation:pulseDot 2s ease-in-out infinite}
+@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+
+/* ── MAIN LAYOUT ── */
+.scene{
+position:fixed;inset:0;
+display:flex;align-items:center;justify-content:center;
+padding:5rem 2rem 2rem;
+z-index:5;
+}
+
+/* ── ORCHESTRATOR (center top) ── */
+.orchestrator{
+position:absolute;
+top:50%;left:50%;
+transform:translate(-50%,-50%);
+display:flex;flex-direction:column;align-items:center;
+gap:.5rem;
+z-index:20;
+}
+.orch-ring{
+position:relative;
+width:110px;height:110px;
+display:flex;align-items:center;justify-content:center;
+}
+.orch-ring::before{
+content:’’;position:absolute;inset:0;
+border-radius:50%;
+border:1px solid rgba(201,168,76,.3);
+animation:spinRing 8s linear infinite;
+}
+.orch-ring::after{
+content:’’;position:absolute;inset:8px;
+border-radius:50%;
+border:1px solid rgba(201,168,76,.15);
+animation:spinRing 6s linear infinite reverse;
+}
+@keyframes spinRing{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.orch-core{
+width:72px;height:72px;
+border-radius:50%;
+background:linear-gradient(135deg,#1a1500,#2d2000);
+border:1px solid var(–gold);
+display:flex;align-items:center;justify-content:center;
+font-family:var(–display);font-size:.65rem;font-weight:800;
+color:var(–gold);letter-spacing:.1em;
+text-align:center;
+box-shadow:0 0 30px rgba(201,168,76,.2),0 0 60px rgba(201,168,76,.08);
+z-index:1;
+animation:glowCore 3s ease-in-out infinite;
+}
+@keyframes glowCore{0%,100%{box-shadow:0 0 30px rgba(201,168,76,.2),0 0 60px rgba(201,168,76,.08)}50%{box-shadow:0 0 50px rgba(201,168,76,.4),0 0 100px rgba(201,168,76,.15)}}
+.orch-label{font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:#64748b;text-align:center}
+
+/* ── AGENT NODES ── */
+.agent-node{
+position:absolute;
+display:flex;flex-direction:column;align-items:center;gap:.5rem;
+z-index:20;
+cursor:pointer;
+transition:transform .3s ease;
+}
+.agent-node:hover{transform:scale(1.08) !important}
+.agent-hex{
+width:72px;height:72px;
+position:relative;
+display:flex;align-items:center;justify-content:center;
+}
+.agent-hex svg{position:absolute;inset:0;width:100%;height:100%}
+.agent-inner{
+position:relative;z-index:1;
+display:flex;flex-direction:column;align-items:center;
+gap:2px;
+}
+.agent-id{font-family:var(–display);font-size:.85rem;font-weight:700;line-height:1}
+.agent-letter{font-size:.55rem;font-weight:400;opacity:.7;letter-spacing:.1em}
+.agent-name{font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:#64748b;text-align:center;white-space:nowrap}
+.agent-badge{
+font-size:.55rem;
+padding:.15rem .5rem;
+border-radius:2px;
+font-weight:600;
+letter-spacing:.08em;
+text-transform:uppercase;
+}
+
+/* ── LOG PANEL ── */
+.log-panel{
+position:fixed;bottom:1.5rem;left:1.5rem;
+width:320px;
+background:rgba(12,15,26,.9);
+border:1px solid var(–border);
+border-radius:4px;
+padding:1rem;
+z-index:30;
+backdrop-filter:blur(8px);
+}
+.log-header{
+font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;
+color:#475569;margin-bottom:.75rem;
+display:flex;align-items:center;justify-content:space-between;
+}
+.log-entries{display:flex;flex-direction:column;gap:.4rem;max-height:120px;overflow:hidden}
+.log-entry{
+font-size:.65rem;line-height:1.5;
+display:flex;gap:.6rem;
+animation:logIn .4s ease both;
+opacity:0;
+}
+@keyframes logIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.log-time{color:#334155;flex-shrink:0}
+.log-agent{font-weight:600;flex-shrink:0}
+.log-msg{color:#94a3b8}
+
+/* ── STATS PANEL ── */
+.stats-panel{
+position:fixed;bottom:1.5rem;right:1.5rem;
+background:rgba(12,15,26,.9);
+border:1px solid var(–border);
+border-radius:4px;
+padding:1rem;
+z-index:30;
+backdrop-filter:blur(8px);
+min-width:180px;
+}
+.stat-item{display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid var(–border)}
+.stat-item:last-child{border-bottom:none}
+.stat-label{font-size:.62rem;color:#475569;letter-spacing:.08em;text-transform:uppercase}
+.stat-val{font-size:.78rem;font-weight:600;font-family:var(–display)}
+
+/* ── TOOLTIP ── */
+.tooltip{
+position:fixed;
+background:rgba(12,15,26,.95);
+border:1px solid var(–border);
+border-radius:4px;
+padding:.75rem 1rem;
+font-size:.68rem;
+line-height:1.6;
+z-index:100;
+pointer-events:none;
+opacity:0;
+transition:opacity .2s;
+max-width:220px;
+}
+.tooltip.show{opacity:1}
+.tooltip-name{font-family:var(–display);font-size:.85rem;font-weight:700;margin-bottom:.4rem}
+.tooltip-desc{color:#94a3b8}
+.tooltip-status{margin-top:.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div class="hdr">
+  <div class="hdr-logo">LOVLL</div>
+  <div class="hdr-title">Architecture Multi-Agents · v2.0</div>
+  <div class="hdr-status"><div class="pulse-dot"></div>Système actif</div>
+</div>
+
+<div class="scene" id="scene">
+
+  <!-- ORCHESTRATEUR CENTRAL -->
+
+  <div class="orchestrator" id="orch">
+    <div class="orch-ring">
+      <div class="orch-core">ORCH<br>ESTR.</div>
+    </div>
+    <div class="orch-label">Coordinateur central</div>
+  </div>
+
+  <!-- 6 AGENTS positionnés en hexagone autour -->
+
+  <!-- AgentM -->
+
+  <div class="agent-node" id="agM" style="top:12%;left:50%;transform:translate(-50%,0)">
+    <div class="agent-hex">
+      <svg viewBox="0 0 72 72"><polygon points="36,4 68,20 68,52 36,68 4,52 4,20" fill="#0c1020" stroke="#00d4ff" stroke-width="1"/><polygon points="36,10 62,24 62,48 36,62 10,48 10,24" fill="none" stroke="rgba(0,212,255,.15)" stroke-width="1"/></svg>
+      <div class="agent-inner"><div class="agent-id" style="color:#00d4ff">M</div><div class="agent-letter" style="color:#00d4ff">Agent</div></div>
+    </div>
+    <div class="agent-name">Monitoring</div>
+    <div class="agent-badge" style="background:rgba(0,212,255,.1);color:#00d4ff">Surveillance</div>
+  </div>
+
+  <!-- AgentI -->
+
+  <div class="agent-node" id="agI" style="top:28%;right:8%;transform:translateY(-50%)">
+    <div class="agent-hex">
+      <svg viewBox="0 0 72 72"><polygon points="36,4 68,20 68,52 36,68 4,52 4,20" fill="#0c1020" stroke="#7c3aed" stroke-width="1"/><polygon points="36,10 62,24 62,48 36,62 10,48 10,24" fill="none" stroke="rgba(124,58,237,.15)" stroke-width="1"/></svg>
+      <div class="agent-inner"><div class="agent-id" style="color:#7c3aed">I</div><div class="agent-letter" style="color:#7c3aed">Agent</div></div>
+    </div>
+    <div class="agent-name">Intelligence</div>
+    <div class="agent-badge" style="background:rgba(124,58,237,.1);color:#7c3aed">Analyse IA</div>
+  </div>
+
+  <!-- AgentA -->
+
+  <div class="agent-node" id="agA" style="bottom:20%;right:8%;transform:translateY(50%)">
+    <div class="agent-hex">
+      <svg viewBox="0 0 72 72"><polygon points="36,4 68,20 68,52 36,68 4,52 4,20" fill="#0c1020" stroke="#00ff88" stroke-width="1"/><polygon points="36,10 62,24 62,48 36,62 10,48 10,24" fill="none" stroke="rgba(0,255,136,.15)" stroke-width="1"/></svg>
+      <div class="agent-inner"><div class="agent-id" style="color:#00ff88">A</div><div class="agent-letter" style="color:#00ff88">Agent</div></div>
+    </div>
+    <div class="agent-name">Automatisation</div>
+    <div class="agent-badge" style="background:rgba(0,255,136,.08);color:#00ff88">Actions</div>
+  </div>
+
+  <!-- AgentV -->
+
+  <div class="agent-node" id="agV" style="bottom:12%;left:50%;transform:translate(-50%,0)">
+    <div class="agent-hex">
+      <svg viewBox="0 0 72 72"><polygon points="36,4 68,20 68,52 36,68 4,52 4,20" fill="#0c1020" stroke="#ff4d6d" stroke-width="1"/><polygon points="36,10 62,24 62,48 36,62 10,48 10,24" fill="none" stroke="rgba(255,77,109,.15)" stroke-width="1"/></svg>
+      <div class="agent-inner"><div class="agent-id" style="color:#ff4d6d">V</div><div class="agent-letter" style="color:#ff4d6d">Agent</div></div>
+    </div>
+    <div class="agent-name">Validation</div>
+    <div class="agent-badge" style="background:rgba(255,77,109,.1);color:#ff4d6d">Contrôle</div>
+  </div>
+
+  <!-- AgentP -->
+
+  <div class="agent-node" id="agP" style="bottom:20%;left:8%;transform:translateY(50%)">
+    <div class="agent-hex">
+      <svg viewBox="0 0 72 72"><polygon points="36,4 68,20 68,52 36,68 4,52 4,20" fill="#0c1020" stroke="#ff8c42" stroke-width="1"/><polygon points="36,10 62,24 62,48 36,62 10,48 10,24" fill="none" stroke="rgba(255,140,66,.15)" stroke-width="1"/></svg>
+      <div class="agent-inner"><div class="agent-id" style="color:#ff8c42">P</div><div class="agent-letter" style="color:#ff8c42">Agent</div></div>
+    </div>
+    <div class="agent-name">Production</div>
+    <div class="agent-badge" style="background:rgba(255,140,66,.1);color:#ff8c42">Déploiement</div>
+  </div>
+
+  <!-- AgentR -->
+
+  <div class="agent-node" id="agR" style="top:28%;left:8%;transform:translateY(-50%)">
+    <div class="agent-hex">
+      <svg viewBox="0 0 72 72"><polygon points="36,4 68,20 68,52 36,68 4,52 4,20" fill="#0c1020" stroke="#3b82f6" stroke-width="1"/><polygon points="36,10 62,24 62,48 36,62 10,48 10,24" fill="none" stroke="rgba(59,130,246,.15)" stroke-width="1"/></svg>
+      <div class="agent-inner"><div class="agent-id" style="color:#3b82f6">R</div><div class="agent-letter" style="color:#3b82f6">Agent</div></div>
+    </div>
+    <div class="agent-name">Reporting</div>
+    <div class="agent-badge" style="background:rgba(59,130,246,.1);color:#3b82f6">Synthèse</div>
+  </div>
+
+</div>
+
+<!-- LOG PANEL -->
+
+<div class="log-panel">
+  <div class="log-header">
+    <span>Flux de communication</span>
+    <span id="log-count" style="color:var(--green)">0 msg</span>
+  </div>
+  <div class="log-entries" id="log-entries"></div>
+</div>
+
+<!-- STATS -->
+
+<div class="stats-panel">
+  <div class="stat-item">
+    <span class="stat-label">Messages</span>
+    <span class="stat-val" id="s-msg" style="color:var(--cyan)">0</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-label">Tâches actives</span>
+    <span class="stat-val" id="s-tasks" style="color:var(--green)">0</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-label">Latence moy.</span>
+    <span class="stat-val" id="s-lat" style="color:var(--gold)">— ms</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-label">Uptime</span>
+    <span class="stat-val" id="s-up" style="color:var(--violet)">00:00:00</span>
+  </div>
+</div>
+
+<!-- TOOLTIP -->
+
+<div class="tooltip" id="tooltip">
+  <div class="tooltip-name" id="tt-name"></div>
+  <div class="tooltip-desc" id="tt-desc"></div>
+  <div class="tooltip-status" id="tt-status"></div>
+</div>
+
+<script>
+/* ── CONFIG AGENTS ── */
+const AGENTS = {
+  agM:{id:'agM',label:'AgentM',color:'#00d4ff',role:'Monitoring',desc:'Surveille en temps réel les métriques système, performances et anomalies. Alerte les autres agents en cas de déviation.'},
+  agI:{id:'agI',label:'AgentI',color:'#7c3aed',role:'Intelligence',desc:'Analyse les données entrantes via les LLM. Génère des insights, classe les priorités et prend les décisions contextuelles.'},
+  agA:{id:'agA',label:'AgentA',color:'#00ff88',role:'Automatisation',desc:'Exécute les actions automatisées — appels API, traitement de données, déclenchement de workflows Make.com.'},
+  agV:{id:'agV',label:'AgentV',color:'#ff4d6d',role:'Validation',desc:'Vérifie la conformité et la qualité de chaque output avant transmission. Garant de la cohérence du système.'},
+  agP:{id:'agP',label:'AgentP',color:'#ff8c42',role:'Production',desc:'Gère le déploiement Vercel, les mises à jour en production et la synchronisation des environnements.'},
+  agR:{id:'agR',label:'AgentR',color:'#3b82f6',role:'Reporting',desc:'Agrège et synthétise les données de tous les agents. Génère les rapports et nourrit le dashboard LOVLL.'},
+};
+
+const MESSAGES = [
+  ['agM','ORCH','Anomalie détectée : latence +120ms'],
+  ['ORCH','agI','Analyse requise sur flux entrant'],
+  ['agI','ORCH','Classification terminée : priorité haute'],
+  ['ORCH','agA','Déclencher workflow Make.com #47'],
+  ['agA','agV','Output prêt pour validation'],
+  ['agV','ORCH','Validation OK — conformité 98.4%'],
+  ['ORCH','agP','Déployer en production (Vercel)'],
+  ['agP','agR','Déploiement réussi · build #312'],
+  ['agR','ORCH','Rapport synthèse généré'],
+  ['agM','agR','KPIs mis à jour toutes métriques'],
+  ['agI','agA','Nouvelle tâche : enrichissement données'],
+  ['ORCH','agM','Rapport d\'état demandé'],
+];
+
+/* ── CANVAS SETUP ── */
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W,H, particles=[], beams=[], msgCount=0, taskCount=0, startTime=Date.now();
+
+function resize(){
+  W=canvas.width=window.innerWidth;
+  H=canvas.height=window.innerHeight;
+}
+resize();
+window.addEventListener('resize',()=>{resize();updatePositions()});
+
+/* ── NODE POSITIONS (computed from DOM) ── */
+const nodePos={};
+function updatePositions(){
+  const ids=['agM','agI','agA','agV','agP','agR','orch'];
+  ids.forEach(id=>{
+    const el=document.getElementById(id==='orch'?'orch':id);
+    if(!el)return;
+    const r=el.getBoundingClientRect();
+    nodePos[id]={x:r.left+r.width/2, y:r.top+r.height/2};
+  });
+}
+setTimeout(updatePositions,200);
+window.addEventListener('resize',()=>setTimeout(updatePositions,100));
+
+/* ── PARTICLES (background) ── */
+function spawnParticle(){
+  particles.push({
+    x:Math.random()*W, y:Math.random()*H,
+    vx:(Math.random()-.5)*.3, vy:(Math.random()-.5)*.3,
+    r:Math.random()*1.5+.3,
+    alpha:Math.random()*.4+.05,
+    color:['#1a1f35','#0d1020','#141830'][Math.floor(Math.random()*3)]
+  });
+}
+for(let i=0;i<80;i++)spawnParticle();
+
+/* ── BEAMS (data packets flying between nodes) ── */
+function spawnBeam(fromId,toId,color){
+  const from=nodePos[fromId==='ORCH'?'orch':fromId];
+  const to=nodePos[toId==='ORCH'?'orch':toId];
+  if(!from||!to)return;
+  beams.push({
+    from:{...from},to:{...to},
+    t:0, speed:.012+Math.random()*.008,
+    color:color||'#c9a84c',
+    size:3+Math.random()*2,
+    tail:[]
+  });
+}
+
+/* ── LOG ── */
+const logContainer=document.getElementById('log-entries');
+const logCount=document.getElementById('log-count');
+let totalMsgs=0;
+function addLog(from,to,text){
+  totalMsgs++;
+  logCount.textContent=totalMsgs+' msg';
+  document.getElementById('s-msg').textContent=totalMsgs;
+  const now=new Date();
+  const t=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  const agentData=AGENTS[from]||{label:'ORCH',color:'#c9a84c'};
+  const entry=document.createElement('div');
+  entry.className='log-entry';
+  entry.innerHTML=`<span class="log-time">${t}</span><span class="log-agent" style="color:${agentData.color}">${agentData.label||'ORCH'}</span><span class="log-msg">→ ${to==='ORCH'?'Orchestrateur':AGENTS[to]?.role||to}: ${text}</span>`;
+  logContainer.prepend(entry);
+  while(logContainer.children.length>5)logContainer.removeChild(logContainer.lastChild);
+}
+
+/* ── UPTIME ── */
+function formatUptime(ms){
+  const s=Math.floor(ms/1000)%60;
+  const m=Math.floor(ms/60000)%60;
+  const h=Math.floor(ms/3600000);
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+/* ── ANIMATION LOOP ── */
+function draw(){
+  ctx.fillStyle='rgba(6,8,16,0.25)';
+  ctx.fillRect(0,0,W,H);
+
+  /* particles */
+  particles.forEach(p=>{
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0)p.x=W; if(p.x>W)p.x=0;
+    if(p.y<0)p.y=H; if(p.y>H)p.y=0;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(30,40,70,${p.alpha})`;
+    ctx.fill();
+  });
+
+  /* connection lines (static) */
+  const orch=nodePos['orch'];
+  if(orch){
+    Object.keys(AGENTS).forEach(id=>{
+      const n=nodePos[id];
+      if(!n)return;
+      ctx.beginPath();
+      ctx.moveTo(orch.x,orch.y);
+      ctx.lineTo(n.x,n.y);
+      ctx.strokeStyle='rgba(201,168,76,0.06)';
+      ctx.lineWidth=1;
+      ctx.stroke();
+    });
+  }
+
+  /* beams */
+  beams=beams.filter(b=>{
+    b.t+=b.speed;
+    if(b.t>1)return false;
+    const x=b.from.x+(b.to.x-b.from.x)*b.t;
+    const y=b.from.y+(b.to.y-b.from.y)*b.t;
+    b.tail.push({x,y});
+    if(b.tail.length>18)b.tail.shift();
+
+    /* tail glow */
+    b.tail.forEach((pt,i)=>{
+      const a=i/b.tail.length;
+      ctx.beginPath();
+      ctx.arc(pt.x,pt.y,b.size*a*.8,0,Math.PI*2);
+      ctx.fillStyle=b.color+(Math.round(a*80).toString(16).padStart(2,'0'));
+      ctx.fill();
+    });
+    /* head */
+    ctx.beginPath();
+    ctx.arc(x,y,b.size,0,Math.PI*2);
+    ctx.fillStyle=b.color;
+    ctx.fill();
+    ctx.shadowBlur=12;ctx.shadowColor=b.color;
+    ctx.fill();
+    ctx.shadowBlur=0;
+    return true;
+  });
+
+  /* stats */
+  document.getElementById('s-lat').textContent=Math.round(80+Math.random()*40)+' ms';
+  document.getElementById('s-tasks').textContent=Math.round(2+Math.random()*4);
+  document.getElementById('s-up').textContent=formatUptime(Date.now()-startTime);
+
+  requestAnimationFrame(draw);
+}
+draw();
+
+/* ── MESSAGE SEQUENCE ── */
+let mi=0;
+function fireMessage(){
+  const [from,to,text]=MESSAGES[mi%MESSAGES.length];mi++;
+  const fromAgent=AGENTS[from];
+  const toAgent=AGENTS[to];
+  const color=fromAgent?.color||'#c9a84c';
+  const fromId=from==='ORCH'?'orch':from;
+  const toId=to==='ORCH'?'orch':to;
+  spawnBeam(fromId,toId,color);
+  addLog(from,to,text);
+}
+// staggered start
+setTimeout(()=>{
+  fireMessage();
+  setInterval(fireMessage,2200);
+},800);
+
+/* ── HOVER TOOLTIPS ── */
+const tooltip=document.getElementById('tooltip');
+Object.keys(AGENTS).forEach(id=>{
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.addEventListener('mousemove',e=>{
+    const a=AGENTS[id];
+    document.getElementById('tt-name').textContent=a.label+' – '+a.role;
+    document.getElementById('tt-name').style.color=a.color;
+    document.getElementById('tt-desc').textContent=a.desc;
+    document.getElementById('tt-status').style.color=a.color;
+    document.getElementById('tt-status').textContent='● Actif · Connecté à l\'orchestrateur';
+    tooltip.classList.add('show');
+    tooltip.style.left=(e.clientX+16)+'px';
+    tooltip.style.top=(e.clientY-60)+'px';
+  });
+  el.addEventListener('mouseleave',()=>tooltip.classList.remove('show'));
+  el.addEventListener('click',()=>{
+    const a=AGENTS[id];
+    spawnBeam(id,'orch',a.color);
+    spawnBeam('orch',id,a.color);
+  });
+});
+</script>
+
+</body>
+</html>
