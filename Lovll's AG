@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOVLL – Architecture Multi-Agents</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@700;800&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+–bg:#000;
+–s1:#070810;
+–s2:#0c0d18;
+–b1:#0f1120;
+–b2:#1a1d2e;
+–gold:#c9a84c;
+–cyan:#00d4ff;
+–violet:#7c3aed;
+–green:#00ff88;
+–red:#ff4d6d;
+–orange:#ff8c42;
+–blue:#3b82f6;
+–mono:‘JetBrains Mono’,monospace;
+–display:‘Syne’,sans-serif;
+–nav:54px;
+–tabs:44px;
+–top:98px;
+}
+html,body{width:100%;height:100%;background:var(–bg);overflow:hidden;font-family:var(–mono);color:#e2e8f0}
+
+/* ══ HEADER ══ */
+.hdr{
+position:fixed;top:0;left:0;right:0;z-index:100;height:var(–nav);
+display:flex;align-items:center;justify-content:space-between;
+padding:0 2rem;background:#000;
+border-bottom:1px solid var(–b1);
+}
+.hdr-logo{font-family:var(–display);font-size:1.1rem;font-weight:800;color:var(–gold);letter-spacing:.1em}
+.hdr-mid{font-size:.55rem;letter-spacing:.22em;text-transform:uppercase;color:rgba(201,168,76,.3)}
+.hdr-ok{display:flex;align-items:center;gap:.5rem;font-size:.58rem;color:var(–green)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(–green);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.18}}
+
+/* ══ TABS ══ */
+.tabs{
+position:fixed;top:var(–nav);left:0;right:0;z-index:99;height:var(–tabs);
+display:flex;background:#000;border-bottom:1px solid var(–b1);
+}
+.tab{
+flex:1;height:100%;display:flex;align-items:center;justify-content:center;gap:.55rem;
+font-family:var(–mono);font-size:.63rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+color:#202436;background:transparent;border:none;border-bottom:2px solid transparent;
+cursor:pointer;transition:color .2s,border-color .2s,background .2s;
+}
+.tab:hover{color:#475569;background:rgba(255,255,255,.012)}
+.tab.on{color:var(–gold);border-bottom-color:var(–gold);background:rgba(201,168,76,.03)}
+.tsep{width:1px;background:var(–b1);flex-shrink:0}
+
+/* ══ PAGES ══ */
+.pg{position:fixed;top:var(–top);left:0;right:0;bottom:0;display:none}
+.pg.on{display:block}
+
+/* ════════════════════════════════════════
+PAGE 1 — VUE AGENTS (fullscreen)
+════════════════════════════════════════ */
+#pg-a{background:#000}
+#cv-a{position:absolute;inset:0;width:100%;height:100%}
+
+.orch{
+position:absolute;transform:translate(-50%,-50%);
+display:flex;flex-direction:column;align-items:center;gap:.55rem;z-index:20;
+}
+.or-wrap{position:relative;display:flex;align-items:center;justify-content:center}
+.or-r1,.or-r2{position:absolute;border-radius:50%}
+.or-r1{border:1px solid rgba(201,168,76,.22);animation:spin 12s linear infinite}
+.or-r2{border:1px dashed rgba(201,168,76,.09);animation:spin 8s linear infinite reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+.or-core{
+border-radius:50%;background:radial-gradient(circle at 38% 32%,#161000,#040300);
+border:1.5px solid var(–gold);
+display:flex;align-items:center;justify-content:center;
+font-family:var(–display);font-weight:800;color:var(–gold);
+letter-spacing:.07em;text-align:center;line-height:1.45;z-index:1;
+animation:glwO 3s ease-in-out infinite;
+}
+@keyframes glwO{
+0%,100%{box-shadow:0 0 28px rgba(201,168,76,.22),0 0 70px rgba(201,168,76,.05)}
+50%    {box-shadow:0 0 55px rgba(201,168,76,.5),0 0 120px rgba(201,168,76,.14)}
+}
+.or-lbl{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(201,168,76,.36)}
+
+.ag{
+position:absolute;transform:translate(-50%,-50%);
+display:flex;flex-direction:column;align-items:center;gap:.5rem;
+cursor:pointer;z-index:20;transition:filter .25s;
+}
+.ag:hover{filter:brightness(1.4) drop-shadow(0 0 10px currentColor)}
+.hw{position:relative;display:flex;align-items:center;justify-content:center}
+.hw svg{position:absolute;inset:0;width:100%;height:100%}
+.hi{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.al{font-family:var(–display);font-weight:800;line-height:1}
+.as2{letter-spacing:.1em;opacity:.6}
+.an{font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:#252840;white-space:nowrap}
+.ab{font-size:.57rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.18rem .65rem;border-radius:2px;white-space:nowrap}
+
+/* ════════════════════════════════════════
+PAGE 2 — FLUX & MESSAGES
+════════════════════════════════════════ */
+#pg-f{display:none;grid-template-columns:1fr 300px}
+#pg-f.on{display:grid}
+
+.fl-l{position:relative;overflow:hidden;background:#000}
+#cv-f{position:absolute;inset:0;width:100%;height:100%}
+.fl-scene{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+
+.ag-s{
+position:absolute;transform:translate(-50%,-50%);
+display:flex;flex-direction:column;align-items:center;gap:.32rem;
+cursor:pointer;z-index:20;transition:filter .2s;
+}
+.ag-s:hover{filter:brightness(1.3)}
+.hw-s{position:relative;width:56px;height:56px;display:flex;align-items:center;justify-content:center}
+.hw-s svg{position:absolute;inset:0;width:100%;height:100%}
+.hi-s{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:1px}
+.al-s{font-family:var(–display);font-size:1rem;font-weight:800;line-height:1}
+.as-s{font-size:.42rem;opacity:.6;letter-spacing:.08em}
+.an-s{font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;color:#1a1e30;white-space:nowrap}
+
+.fl-r{
+background:var(–s1);border-left:1px solid var(–b1);
+display:flex;flex-direction:column;overflow:hidden;
+}
+.rph{
+padding:.55rem 1rem;font-size:.52rem;letter-spacing:.16em;text-transform:uppercase;
+color:#1a1e30;border-bottom:1px solid var(–b1);
+display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.rph em{color:var(–green);font-style:normal;font-size:.56rem}
+.sg{display:grid;grid-template-columns:1fr 1fr;flex-shrink:0}
+.st{padding:.58rem .85rem;border-right:1px solid var(–b1);border-bottom:1px solid var(–b1)}
+.st:nth-child(2n){border-right:none}
+.st-l{font-size:.47rem;letter-spacing:.12em;text-transform:uppercase;color:#1a1e30;margin-bottom:.2rem}
+.st-v{font-family:var(–display);font-size:.95rem;font-weight:700;line-height:1}
+.st-s{font-size:.45rem;color:#0f1120;margin-top:.12rem}
+.rh{padding:.4rem .9rem;font-size:.48rem;letter-spacing:.14em;text-transform:uppercase;color:#0f1120;border-bottom:1px solid var(–b1);flex-shrink:0}
+.ar{display:flex;align-items:center;gap:.5rem;padding:.34rem .9rem;border-bottom:1px solid rgba(15,17,32,.6)}
+.ar-d{width:5px;height:5px;border-radius:50%;flex-shrink:0;animation:blink 2s ease-in-out infinite}
+.ar-i{font-size:.57rem;font-weight:600;min-width:26px}
+.ar-r{font-size:.52rem;color:#1a1e30;flex:1}
+.ar-c{font-size:.52rem;color:#0f1120;font-weight:600}
+.lh{padding:.4rem .9rem;font-size:.48rem;letter-spacing:.14em;text-transform:uppercase;color:#0f1120;border-bottom:1px solid var(–b1);flex-shrink:0}
+.ls{flex:1;overflow-y:auto}
+.ls::-webkit-scrollbar{width:2px}
+.ls::-webkit-scrollbar-thumb{background:var(–b1)}
+.le{padding:.42rem .9rem;border-bottom:1px solid rgba(15,17,32,.5);animation:sli .3s ease both}
+@keyframes sli{from{opacity:0;transform:translateX(6px)}to{opacity:1;transform:none}}
+.lt{display:flex;align-items:center;gap:.38rem;margin-bottom:.15rem}
+.lt-t{font-size:.47rem;color:#0a0c14;flex-shrink:0}
+.lt-f{font-size:.53rem;font-weight:600;flex-shrink:0}
+.lt-a{font-size:.47rem;color:#0a0c14}
+.lt-o{font-size:.53rem;flex-shrink:0}
+.lm{font-size:.52rem;color:#1a1e30;line-height:1.4}
+
+/* ════════════════════════════════════════
+PAGE 3 — ÉQUIPE (9 members)
+════════════════════════════════════════ */
+#pg-e{display:none;background:#000;align-items:flex-start;justify-content:center;padding:2.5rem 3rem;overflow-y:auto}
+#pg-e.on{display:flex;flex-direction:column}
+
+.team-hdr{
+margin-bottom:2.5rem;
+}
+.team-eyebrow{font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:rgba(201,168,76,.4);display:flex;align-items:center;gap:.7rem;margin-bottom:.8rem}
+.team-eyebrow::before{content:’’;display:block;width:1.4rem;height:1px;background:rgba(201,168,76,.4)}
+.team-title{font-family:var(–display);font-size:clamp(1.4rem,3vw,2.2rem);font-weight:800;color:#e2e8f0;line-height:1.1}
+.team-title em{font-style:italic;color:var(–gold)}
+.team-sub{font-size:.7rem;color:#252840;margin-top:.5rem;letter-spacing:.05em}
+
+/* Department sections */
+.dept{margin-bottom:2rem}
+.dept-label{
+font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:#1a1e30;
+margin-bottom:1rem;padding-bottom:.5rem;
+border-bottom:1px solid var(–b1);
+display:flex;align-items:center;gap:.6rem;
+}
+.dept-label::before{content:’’;display:inline-block;width:4px;height:4px;border-radius:50%}
+
+.member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1px;background:var(–b1)}
+.member{
+background:#000;
+padding:1.2rem 1.4rem;
+display:flex;align-items:flex-start;gap:1rem;
+transition:background .2s;
+cursor:default;
+}
+.member:hover{background:var(–s1)}
+.m-hex{
+width:44px;height:44px;flex-shrink:0;
+position:relative;display:flex;align-items:center;justify-content:center;
+}
+.m-hex svg{position:absolute;inset:0;width:100%;height:100%}
+.m-init{position:relative;z-index:1;font-family:var(–display);font-size:.7rem;font-weight:800}
+.m-info{display:flex;flex-direction:column;gap:.2rem;min-width:0}
+.m-name{font-family:var(–display);font-size:.82rem;font-weight:700;color:#c8d0e0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-role{font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.m-dept{font-size:.55rem;color:#1a1e30;margin-top:.1rem}
+
+/* ══ TOOLTIP ══ */
+.tt{position:fixed;background:rgba(0,0,0,.97);border:1px solid var(–b2);border-radius:2px;padding:.6rem .85rem;font-size:.6rem;line-height:1.6;z-index:500;pointer-events:none;opacity:0;transition:opacity .14s;max-width:210px}
+.tt.show{opacity:1}
+.tt-n{font-family:var(–display);font-size:.8rem;font-weight:700;margin-bottom:.28rem}
+.tt-d{color:#475569;font-size:.56rem}
+</style>
+
+</head>
+<body>
+
+<!-- HEADER -->
+
+<header class="hdr">
+  <div class="hdr-logo">LOVLL</div>
+  <div class="hdr-mid">Architecture Multi-Agents · V2.0</div>
+  <div class="hdr-ok"><div class="dot"></div>Système actif</div>
+</header>
+
+<!-- TABS -->
+
+<div class="tabs">
+  <button class="tab on" id="tab-a" onclick="go('a')">⬡ &nbsp;Vue Agents</button>
+  <div class="tsep"></div>
+  <button class="tab" id="tab-f" onclick="go('f')">⇄ &nbsp;Flux &amp; Messages</button>
+  <div class="tsep"></div>
+  <button class="tab" id="tab-e" onclick="go('e')">◈ &nbsp;Équipe</button>
+</div>
+
+<!-- ══════════ PAGE 1 : VUE AGENTS ══════════ -->
+
+<div class="pg on" id="pg-a">
+  <canvas id="cv-a"></canvas>
+
+  <div class="orch" id="orch-a">
+    <div class="or-wrap" id="orw-a">
+      <div class="or-r1" id="orr1-a"></div>
+      <div class="or-r2" id="orr2-a"></div>
+      <div class="or-core" id="orc-a">ORCH<br>ESTR.</div>
+    </div>
+    <div class="or-lbl">Coordinateur central</div>
+  </div>
+
+  <div class="ag" id="a-agM" data-id="agM">
+    <div class="hw" id="hw-agM"><svg viewBox="0 0 110 110"><polygon points="55,6 104,30 104,80 55,104 6,80 6,30" fill="#000" stroke="#00d4ff" stroke-width="1.8"/><polygon points="55,16 94,38 94,72 55,94 16,72 16,38" fill="none" stroke="rgba(0,212,255,.1)" stroke-width="1"/></svg><div class="hi"><div class="al" style="color:#00d4ff">M</div><div class="as2" style="color:#00d4ff;font-size:.5rem">Agent</div></div></div>
+    <div class="an">Monitoring</div><div class="ab" style="background:rgba(0,212,255,.08);color:#00d4ff">Surveillance</div>
+  </div>
+  <div class="ag" id="a-agI" data-id="agI">
+    <div class="hw" id="hw-agI"><svg viewBox="0 0 110 110"><polygon points="55,6 104,30 104,80 55,104 6,80 6,30" fill="#000" stroke="#7c3aed" stroke-width="1.8"/><polygon points="55,16 94,38 94,72 55,94 16,72 16,38" fill="none" stroke="rgba(124,58,237,.1)" stroke-width="1"/></svg><div class="hi"><div class="al" style="color:#7c3aed">I</div><div class="as2" style="color:#7c3aed;font-size:.5rem">Agent</div></div></div>
+    <div class="an">Intelligence</div><div class="ab" style="background:rgba(124,58,237,.08);color:#7c3aed">Analyse IA</div>
+  </div>
+  <div class="ag" id="a-agA" data-id="agA">
+    <div class="hw" id="hw-agA"><svg viewBox="0 0 110 110"><polygon points="55,6 104,30 104,80 55,104 6,80 6,30" fill="#000" stroke="#00ff88" stroke-width="1.8"/><polygon points="55,16 94,38 94,72 55,94 16,72 16,38" fill="none" stroke="rgba(0,255,136,.08)" stroke-width="1"/></svg><div class="hi"><div class="al" style="color:#00ff88">A</div><div class="as2" style="color:#00ff88;font-size:.5rem">Agent</div></div></div>
+    <div class="an">Automatisation</div><div class="ab" style="background:rgba(0,255,136,.07);color:#00ff88">Actions</div>
+  </div>
+  <div class="ag" id="a-agV" data-id="agV">
+    <div class="hw" id="hw-agV"><svg viewBox="0 0 110 110"><polygon points="55,6 104,30 104,80 55,104 6,80 6,30" fill="#000" stroke="#ff4d6d" stroke-width="1.8"/><polygon points="55,16 94,38 94,72 55,94 16,72 16,38" fill="none" stroke="rgba(255,77,109,.1)" stroke-width="1"/></svg><div class="hi"><div class="al" style="color:#ff4d6d">V</div><div class="as2" style="color:#ff4d6d;font-size:.5rem">Agent</div></div></div>
+    <div class="an">Validation</div><div class="ab" style="background:rgba(255,77,109,.08);color:#ff4d6d">Contrôle</div>
+  </div>
+  <div class="ag" id="a-agP" data-id="agP">
+    <div class="hw" id="hw-agP"><svg viewBox="0 0 110 110"><polygon points="55,6 104,30 104,80 55,104 6,80 6,30" fill="#000" stroke="#ff8c42" stroke-width="1.8"/><polygon points="55,16 94,38 94,72 55,94 16,72 16,38" fill="none" stroke="rgba(255,140,66,.08)" stroke-width="1"/></svg><div class="hi"><div class="al" style="color:#ff8c42">P</div><div class="as2" style="color:#ff8c42;font-size:.5rem">Agent</div></div></div>
+    <div class="an">Production</div><div class="ab" style="background:rgba(255,140,66,.08);color:#ff8c42">Déploiement</div>
+  </div>
+  <div class="ag" id="a-agR" data-id="agR">
+    <div class="hw" id="hw-agR"><svg viewBox="0 0 110 110"><polygon points="55,6 104,30 104,80 55,104 6,80 6,30" fill="#000" stroke="#3b82f6" stroke-width="1.8"/><polygon points="55,16 94,38 94,72 55,94 16,72 16,38" fill="none" stroke="rgba(59,130,246,.1)" stroke-width="1"/></svg><div class="hi"><div class="al" style="color:#3b82f6">R</div><div class="as2" style="color:#3b82f6;font-size:.5rem">Agent</div></div></div>
+    <div class="an">Reporting</div><div class="ab" style="background:rgba(59,130,246,.08);color:#3b82f6">Synthèse</div>
+  </div>
+</div>
+
+<!-- ══════════ PAGE 2 : FLUX & MESSAGES ══════════ -->
+
+<div class="pg" id="pg-f">
+  <div class="fl-l">
+    <canvas id="cv-f"></canvas>
+    <div class="fl-scene">
+      <div class="orch" id="orch-f" style="transform:translate(-50%,-58%)">
+        <div class="or-wrap" style="width:76px;height:76px">
+          <div class="or-r1" style="width:76px;height:76px"></div>
+          <div class="or-r2" style="width:54px;height:54px"></div>
+          <div class="or-core" style="width:50px;height:50px;font-size:.48rem">ORCH<br>ESTR.</div>
+        </div>
+        <div class="or-lbl" style="font-size:.5rem">Coordinateur</div>
+      </div>
+      <div class="ag-s" id="f-agM" data-id="agM" style="top:7%;left:50%"><div class="hw-s"><svg viewBox="0 0 56 56"><polygon points="28,3 53,15 53,41 28,53 3,41 3,15" fill="#000" stroke="#00d4ff" stroke-width="1.2"/></svg><div class="hi-s"><div class="al-s" style="color:#00d4ff">M</div><div class="as-s" style="color:#00d4ff">Agent</div></div></div><div class="an-s">Monitoring</div></div>
+      <div class="ag-s" id="f-agI" data-id="agI" style="top:22%;right:5%;transform:translate(0,-50%)"><div class="hw-s"><svg viewBox="0 0 56 56"><polygon points="28,3 53,15 53,41 28,53 3,41 3,15" fill="#000" stroke="#7c3aed" stroke-width="1.2"/></svg><div class="hi-s"><div class="al-s" style="color:#7c3aed">I</div><div class="as-s" style="color:#7c3aed">Agent</div></div></div><div class="an-s">Intelligence</div></div>
+      <div class="ag-s" id="f-agA" data-id="agA" style="bottom:22%;right:5%;transform:translate(0,50%)"><div class="hw-s"><svg viewBox="0 0 56 56"><polygon points="28,3 53,15 53,41 28,53 3,41 3,15" fill="#000" stroke="#00ff88" stroke-width="1.2"/></svg><div class="hi-s"><div class="al-s" style="color:#00ff88">A</div><div class="as-s" style="color:#00ff88">Agent</div></div></div><div class="an-s">Automatisation</div></div>
+      <div class="ag-s" id="f-agV" data-id="agV" style="bottom:7%;left:50%;transform:translate(-50%,0)"><div class="hw-s"><svg viewBox="0 0 56 56"><polygon points="28,3 53,15 53,41 28,53 3,41 3,15" fill="#000" stroke="#ff4d6d" stroke-width="1.2"/></svg><div class="hi-s"><div class="al-s" style="color:#ff4d6d">V</div><div class="as-s" style="color:#ff4d6d">Agent</div></div></div><div class="an-s">Validation</div></div>
+      <div class="ag-s" id="f-agP" data-id="agP" style="bottom:22%;left:5%;transform:translate(0,50%)"><div class="hw-s"><svg viewBox="0 0 56 56"><polygon points="28,3 53,15 53,41 28,53 3,41 3,15" fill="#000" stroke="#ff8c42" stroke-width="1.2"/></svg><div class="hi-s"><div class="al-s" style="color:#ff8c42">P</div><div class="as-s" style="color:#ff8c42">Agent</div></div></div><div class="an-s">Production</div></div>
+      <div class="ag-s" id="f-agR" data-id="agR" style="top:22%;left:5%;transform:translate(0,-50%)"><div class="hw-s"><svg viewBox="0 0 56 56"><polygon points="28,3 53,15 53,41 28,53 3,41 3,15" fill="#000" stroke="#3b82f6" stroke-width="1.2"/></svg><div class="hi-s"><div class="al-s" style="color:#3b82f6">R</div><div class="as-s" style="color:#3b82f6">Agent</div></div></div><div class="an-s">Reporting</div></div>
+    </div>
+  </div>
+  <div class="fl-r">
+    <div class="rph">Métriques temps réel <em id="lc">0 msg</em></div>
+    <div class="sg">
+      <div class="st"><div class="st-l">Messages</div><div class="st-v" id="s-msg" style="color:var(--cyan)">0</div><div class="st-s">session</div></div>
+      <div class="st"><div class="st-l">Tâches actives</div><div class="st-v" id="s-tasks" style="color:var(--green)">0</div><div class="st-s">en cours</div></div>
+      <div class="st"><div class="st-l">Latence moy.</div><div class="st-v" id="s-lat" style="color:var(--gold)">—</div><div class="st-s">ms</div></div>
+      <div class="st"><div class="st-l">Uptime</div><div class="st-v" id="s-up" style="color:var(--violet);font-size:.75rem">00:00:00</div><div class="st-s">actif</div></div>
+    </div>
+    <div class="rh">Activité par agent</div>
+    <div class="ar"><div class="ar-d" style="background:#00d4ff"></div><div class="ar-i" style="color:#00d4ff">AgM</div><div class="ar-r">Monitoring</div><div class="ar-c" id="cnt-agM">0</div></div>
+    <div class="ar"><div class="ar-d" style="background:#7c3aed;animation-delay:.3s"></div><div class="ar-i" style="color:#7c3aed">AgI</div><div class="ar-r">Intelligence</div><div class="ar-c" id="cnt-agI">0</div></div>
+    <div class="ar"><div class="ar-d" style="background:#00ff88;animation-delay:.6s"></div><div class="ar-i" style="color:#00ff88">AgA</div><div class="ar-r">Automatisation</div><div class="ar-c" id="cnt-agA">0</div></div>
+    <div class="ar"><div class="ar-d" style="background:#ff4d6d;animation-delay:.9s"></div><div class="ar-i" style="color:#ff4d6d">AgV</div><div class="ar-r">Validation</div><div class="ar-c" id="cnt-agV">0</div></div>
+    <div class="ar"><div class="ar-d" style="background:#ff8c42;animation-delay:1.2s"></div><div class="ar-i" style="color:#ff8c42">AgP</div><div class="ar-r">Production</div><div class="ar-c" id="cnt-agP">0</div></div>
+    <div class="ar"><div class="ar-d" style="background:#3b82f6;animation-delay:1.5s"></div><div class="ar-i" style="color:#3b82f6">AgR</div><div class="ar-r">Reporting</div><div class="ar-c" id="cnt-agR">0</div></div>
+    <div class="lh">Flux de communication</div>
+    <div class="ls" id="log"></div>
+  </div>
+</div>
+
+<!-- ══════════ PAGE 3 : ÉQUIPE ══════════ -->
+
+<div class="pg" id="pg-e">
+  <div class="team-hdr">
+    <div class="team-eyebrow">LOVLL Studio</div>
+    <div class="team-title">L'équipe <em>derrière</em> le système</div>
+    <div class="team-sub">9 experts · Stratégie, Produit, Technique &amp; Business</div>
+  </div>
+
+  <!-- Direction -->
+
+  <div class="dept">
+    <div class="dept-label" style="color:#c9a84c88"><span style="background:var(--gold);width:4px;height:4px;border-radius:50%;display:inline-block"></span>Direction</div>
+    <div class="member-grid">
+      <div class="member">
+        <div class="m-hex"><svg viewBox="0 0 44 44"><polygon points="22,2 42,12 42,32 22,42 2,32 2,12" fill="#000" stroke="#c9a84c" stroke-width="1.2"/></svg><div class="m-init" style="color:#c9a84c">LV</div></div>
+        <div class="m-info"><div class="m-name">Lina Vorel</div><div class="m-role" style="color:#c9a84c">CEO</div><div class="m-dept">Vision &amp; Stratégie</div></div>
+      </div>
+      <div class="member">
+        <div class="m-hex"><svg viewBox="0 0 44 44"><polygon points="22,2 42,12 42,32 22,42 2,32 2,12" fill="#000" stroke="#e8d5a3" stroke-width="1.2"/></svg><div class="m-init" style="color:#e8d5a3">AD</div></div>
+        <div class="m-info"><div class="m-name">Alexandre Dorian</div><div class="m-role" style="color:#e8d5a3">CTO</div><div class="m-dept">Architecture &amp; Sécurité</div></div>
+      </div>
+      <div class="member">
+        <div class="m-hex"><svg viewBox="0 0 44 44"><polygon points="22,2 42,12 42,32 22,42 2,32 2,12" fill="#000" stroke="#f472b6" stroke-width="1.2"/></svg><div class="m-init" style="color:#f472b6">MC</div></div>
+        <div class="m-info"><div class="m-name">Maya Chen</div><div class="m-role" style="color:#f472b6">CPO</div><div class="m-dept">Produit &amp; UX</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Produit -->
+
+  <div class="dept">
+    <div class="dept-label"><span style="background:#2dd4bf;width:4px;height:4px;border-radius:50%;display:inline-block"></span>&nbsp;Produit &amp; Design</div>
+    <div class="member-grid">
+      <div class="member">
+        <div class="m-hex"><svg viewBox="0 0 44 44"><polygon points="22,2 42,12 42,32 22,42 2,32 2,12" fill="#000" stroke="#2dd4bf" stroke-width="1.2"/></svg><div class="m-init" style="color:#2dd4bf">EM</div></div>
+        <div class="m-info"><div class="m-name">Élodie Marceau</div><div class="m-role" style="color:#2dd4bf">UX/UI Designer</div><div class="m-dept">Interfaces &amp; Design System</div></div>
+      </div>
+      <div class="member">
+        <div class="m-hex"><svg viewBox="0 0 44 44"><polygon points="22,2 42,12 42,32 22,42 2,32 2,12" fill="#000" stroke="#a3e635" stroke-width="1.2"/></svg><div class="m-init" style="color:#a3e635">NK</div></div>
+        <div class="m-info"><div class="m-name">Nassim El Kouri</div><div class="m-role" style="color:#a3e635">Product Owner</div><div class="m-dept">Backlog &amp; Priorités</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Technique -->
+
+  <div class="dept">
+    <div class="dept-label"><span style="background:#38bdf8;width:4px;height:4px;border-radius:50%;display:inline-block"></span>&nbsp;Ingénierie</div>
+    <div class="member-grid">
+      <div class="member">
+        <div class="m-hex"><svg viewBox="0 0 44 44"><polygon points="22,2 42,12 42,32 22,42 2,32 2,12" fill="#000" stroke="#38bdf8" stroke-width="1.2"/></svg><div class="m-init" style="color:#38bdf8">JN</div></div>
+        <div class="m-info"><div class="m-name">Jules Navarro</div><div class="m-role" style="color:#38bdf8">Full-Stack Dev</div><div class="m-dept">React · Node.js</div></div>
+      </div>
+      <div class="member">
+        <div class="m-hex"><svg viewBox="0 0 44 44"><polygon points="22,2 42,12 42,32 22,42 2,32 2,12" fill="#000" stroke="#fb7185" stroke-width="1.2"/></svg><div class="m-init" style="color:#fb7185">SK</div></div>
+        <div class="m-info"><div class="m-name">Sara Khelifi</div><div class="m-role" style="color:#fb7185">Mobile Dev</div><div class="m-dept">React Native · Flutter</div></div>
+      </div>
+      <div class="member">
+        <div class="m-hex"><svg viewBox="0 0 44 44"><polygon points="22,2 42,12 42,32 22,42 2,32 2,12" fill="#000" stroke="#fbbf24" stroke-width="1.2"/></svg><div class="m-init" style="color:#fbbf24">HM</div></div>
+        <div class="m-info"><div class="m-name">Hugo Martins</div><div class="m-role" style="color:#fbbf24">DevOps</div><div class="m-dept">AWS · CI/CD · Docker</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Business -->
+
+  <div class="dept">
+    <div class="dept-label"><span style="background:#818cf8;width:4px;height:4px;border-radius:50%;display:inline-block"></span>&nbsp;Business &amp; Support</div>
+    <div class="member-grid">
+      <div class="member">
+        <div class="m-hex"><svg viewBox="0 0 44 44"><polygon points="22,2 42,12 42,32 22,42 2,32 2,12" fill="#000" stroke="#818cf8" stroke-width="1.2"/></svg><div class="m-init" style="color:#818cf8">CD</div></div>
+        <div class="m-info"><div class="m-name">Camille Duret</div><div class="m-role" style="color:#818cf8">Head of Sales</div><div class="m-dept">Croissance &amp; Partenariats</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tt" id="tt"><div class="tt-n" id="tt-n"></div><div class="tt-d" id="tt-d"></div></div>
+
+<script>
+const AGENTS={
+  agM:{label:'AgentM',color:'#00d4ff',role:'Monitoring',   desc:'Surveille métriques, performances et anomalies en temps réel.'},
+  agI:{label:'AgentI',color:'#7c3aed',role:'Intelligence',  desc:'Analyse via LLM, génère insights et décisions contextuelles.'},
+  agA:{label:'AgentA',color:'#00ff88',role:'Automatisation',desc:'Exécute actions automatisées, API et workflows Make.com.'},
+  agV:{label:'AgentV',color:'#ff4d6d',role:'Validation',    desc:'Vérifie conformité et qualité de chaque output.'},
+  agP:{label:'AgentP',color:'#ff8c42',role:'Production',    desc:'Déploiement Vercel, mises à jour prod et synchronisation.'},
+  agR:{label:'AgentR',color:'#3b82f6',role:'Reporting',     desc:'Agrège données de tous les agents, génère les rapports.'},
+};
+const IDS=Object.keys(AGENTS);
+const MSGS=[
+  ['agM','ORCH','Anomalie détectée : latence +120ms'],
+  ['ORCH','agI','Analyse requise sur flux entrant'],
+  ['agI','ORCH','Classification terminée : priorité haute'],
+  ['ORCH','agA','Déclencher workflow Make.com #47'],
+  ['agA','agV','Output prêt pour validation'],
+  ['agV','ORCH','Validation OK · conformité 98.4%'],
+  ['ORCH','agP','Déployer en production Vercel'],
+  ['agP','agR','Déploiement réussi · build #312'],
+  ['agR','ORCH','Rapport synthèse généré'],
+  ['agM','agR','KPIs mis à jour · all OK'],
+  ['agI','agA','Nouvelle tâche : enrichissement data'],
+  ['ORCH','agV','Audit sécurité demandé'],
+];
+
+const cvA=document.getElementById('cv-a'),ctxA=cvA.getContext('2d');
+const cvF=document.getElementById('cv-f'),ctxF=cvF.getContext('2d');
+let bA=[],bF=[],posA={},posF={};
+let curTab='a',totalMsgs=0,agCnts={agM:0,agI:0,agA:0,agV:0,agP:0,agR:0};
+const t0=Date.now();
+
+function sz(){
+  const pa=document.getElementById('pg-a');
+  cvA.width=pa.offsetWidth;cvA.height=pa.offsetHeight;
+  const fl=document.querySelector('.fl-l');
+  if(fl){cvF.width=fl.offsetWidth;cvF.height=fl.offsetHeight;}
+}
+sz();
+window.addEventListener('resize',()=>{sz();placeA();setTimeout(updPos,80);});
+
+function placeA(){
+  const pa=document.getElementById('pg-a');
+  const cx=pa.offsetWidth/2,cy=pa.offsetHeight/2;
+  const R=Math.min(pa.offsetWidth,pa.offsetHeight)*0.34;
+  const hx=Math.min(pa.offsetWidth,pa.offsetHeight)*0.14;
+  const oa=document.getElementById('orch-a');
+  oa.style.left=cx+'px';oa.style.top=cy+'px';
+  const cs=hx*.9,rs=cs*1.7;
+  document.getElementById('orw-a').style.cssText=`width:${rs}px;height:${rs}px`;
+  document.getElementById('orr1-a').style.cssText=`width:${rs}px;height:${rs}px`;
+  document.getElementById('orr2-a').style.cssText=`width:${rs*.72}px;height:${rs*.72}px`;
+  const c=document.getElementById('orc-a');
+  c.style.width=cs+'px';c.style.height=cs+'px';c.style.fontSize=(cs*.12)+'px';
+  posA.orch={x:cx,y:cy};
+  IDS.forEach((id,i)=>{
+    const a=-Math.PI/2+(i/IDS.length)*Math.PI*2;
+    const x=cx+R*Math.cos(a),y=cy+R*Math.sin(a);
+    const el=document.getElementById('a-'+id);
+    el.style.left=x+'px';el.style.top=y+'px';
+    document.getElementById('hw-'+id).style.cssText=`width:${hx}px;height:${hx}px`;
+    el.querySelector('.al').style.fontSize=(hx*.36)+'px';
+    posA[id]={x,y};
+  });
+}
+setTimeout(()=>{placeA();setTimeout(updPos,150);},80);
+
+function updPos(){
+  const pa=document.getElementById('pg-a'),pr=pa.getBoundingClientRect();
+  IDS.forEach(id=>{const el=document.getElementById('a-'+id);if(!el)return;const r=el.getBoundingClientRect();posA[id]={x:r.left+r.width/2-pr.left,y:r.top+r.height/2-pr.top};});
+  const oa=document.getElementById('orch-a');if(oa){const r=oa.getBoundingClientRect();posA.orch={x:r.left+r.width/2-pr.left,y:r.top+r.height/2-pr.top};}
+  const fl=document.querySelector('.fl-l');if(!fl)return;
+  const fr=fl.getBoundingClientRect();
+  IDS.forEach(id=>{const el=document.getElementById('f-'+id);if(!el)return;const r=el.getBoundingClientRect();posF[id]={x:r.left+r.width/2-fr.left,y:r.top+r.height/2-fr.top};});
+  const of2=document.getElementById('orch-f');if(of2){const r=of2.getBoundingClientRect();posF.orch={x:r.left+r.width/2-fr.left,y:r.top+r.height/2-fr.top};}
+}
+
+function mkBeam(arr,pos,fr,to,col,sz=3){
+  const fk=fr==='ORCH'?'orch':fr,tk=to==='ORCH'?'orch':to;
+  const f=pos[fk],t=pos[tk];if(!f||!t)return;
+  arr.push({fx:f.x,fy:f.y,tx:t.x,ty:t.y,t:0,speed:.009+Math.random()*.007,color:col,size:sz,tail:[]});
+}
+
+function drawScene(ctx,cv,beams,pos,pulse){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  const o=pos.orch;
+  if(o){
+    IDS.forEach(id=>{
+      const n=pos[id];if(!n)return;
+      const g=ctx.createLinearGradient(o.x,o.y,n.x,n.y);
+      g.addColorStop(0,'rgba(201,168,76,.09)');g.addColorStop(1,AGENTS[id].color+'15');
+      ctx.beginPath();ctx.moveTo(o.x,o.y);ctx.lineTo(n.x,n.y);
+      ctx.strokeStyle=g;ctx.lineWidth=1;ctx.stroke();
+    });
+    for(let i=0;i<IDS.length;i++)for(let j=i+1;j<IDS.length;j++){
+      const a=pos[IDS[i]],b=pos[IDS[j]];if(!a||!b)continue;
+      ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+      ctx.strokeStyle='rgba(255,255,255,.015)';ctx.lineWidth=1;
+      ctx.setLineDash([3,10]);ctx.stroke();ctx.setLineDash([]);
+    }
+    if(pulse){
+      const t=Date.now()/1000;
+      [1,.7,.45].forEach((s,i)=>{
+        const r=Math.min(cv.width,cv.height)*.09*s;
+        const al=(.08-i*.022)+Math.sin(t*1.6+i)*.022;
+        ctx.beginPath();ctx.arc(o.x,o.y,r,0,Math.PI*2);
+        ctx.strokeStyle=`rgba(201,168,76,${Math.max(0,al)})`;ctx.lineWidth=1;ctx.stroke();
+      });
+    }
+  }
+  for(let i=beams.length-1;i>=0;i--){
+    const b=beams[i];b.t+=b.speed;
+    if(b.t>1){beams.splice(i,1);continue;}
+    const e=b.t<.5?2*b.t*b.t:1-Math.pow(-2*b.t+2,2)/2;
+    const x=b.fx+(b.tx-b.fx)*e,y=b.fy+(b.ty-b.fy)*e;
+    b.tail.push({x,y});if(b.tail.length>22)b.tail.shift();
+    b.tail.forEach((p,j)=>{
+      const a=j/b.tail.length;
+      ctx.beginPath();ctx.arc(p.x,p.y,b.size*a*.85,0,Math.PI*2);
+      ctx.fillStyle=b.color+(Math.round(a*95).toString(16).padStart(2,'0'));ctx.fill();
+    });
+    ctx.beginPath();ctx.arc(x,y,b.size,0,Math.PI*2);
+    ctx.fillStyle=b.color;ctx.shadowBlur=16;ctx.shadowColor=b.color;ctx.fill();ctx.shadowBlur=0;
+    ctx.beginPath();ctx.arc(x,y,b.size*2.5,0,Math.PI*2);
+    ctx.strokeStyle=b.color+'32';ctx.lineWidth=.7;ctx.stroke();
+  }
+}
+
+function loop(){
+  drawScene(ctxA,cvA,bA,posA,true);
+  if(curTab==='f'){
+    drawScene(ctxF,cvF,bF,posF,false);
+    document.getElementById('s-lat').textContent=Math.round(70+Math.random()*60);
+    document.getElementById('s-tasks').textContent=Math.round(1+Math.random()*5);
+    document.getElementById('s-up').textContent=fup(Date.now()-t0);
+  }
+  requestAnimationFrame(loop);
+}
+loop();
+
+// ambient page 1
+setInterval(()=>{const id=IDS[Math.floor(Math.random()*IDS.length)];mkBeam(bA,posA,id,'ORCH',AGENTS[id].color,3.5);setTimeout(()=>mkBeam(bA,posA,'ORCH',id,AGENTS[id].color,3.5),800);},1500);
+setInterval(()=>{const s=[...IDS].sort(()=>Math.random()-.5);mkBeam(bA,posA,s[0],s[1],AGENTS[s[0]].color,2.2);},2300);
+setInterval(()=>{const id=IDS[Math.floor(Math.random()*IDS.length)];mkBeam(bA,posA,'ORCH',id,AGENTS[id].color,4);},3100);
+setTimeout(()=>IDS.forEach(id=>mkBeam(bA,posA,id,'ORCH',AGENTS[id].color,3)),500);
+
+function go(tab){
+  curTab=tab;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.getElementById('tab-'+tab).classList.add('on');
+  document.getElementById('pg-'+tab).classList.add('on');
+  setTimeout(()=>{sz();placeA();updPos();},60);
+}
+
+// messages
+const logEl=document.getElementById('log');let mi=0;
+function fup(ms){const s=Math.floor(ms/1000)%60,m=Math.floor(ms/60000)%60,h=Math.floor(ms/3600000);return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
+function nows(){const d=new Date();return`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;}
+function fire(){
+  const[fr,to,txt]=MSGS[mi%MSGS.length];mi++;
+  const fa=AGENTS[fr],ta=AGENTS[to];
+  mkBeam(bF,posF,fr,to,fa?.color||'#c9a84c',3.2);
+  totalMsgs++;
+  document.getElementById('s-msg').textContent=totalMsgs;
+  document.getElementById('lc').textContent=totalMsgs+' msg';
+  if(agCnts[fr]!==undefined){agCnts[fr]++;document.getElementById('cnt-'+fr).textContent=agCnts[fr];}
+  if(to!=='ORCH'&&agCnts[to]!==undefined){agCnts[to]++;document.getElementById('cnt-'+to).textContent=agCnts[to];}
+  const e=document.createElement('div');e.className='le';
+  e.innerHTML=`<div class="lt"><span class="lt-t">${nows()}</span><span class="lt-f" style="color:${fa?.color||'#c9a84c'}">${fa?.label||'ORCH'}</span><span class="lt-a">→</span><span class="lt-o" style="color:${ta?.color||'#c9a84c'}">${ta?.label||'ORCH'}</span></div><div class="lm">${txt}</div>`;
+  logEl.prepend(e);while(logEl.children.length>30)logEl.removeChild(logEl.lastChild);
+}
+setTimeout(()=>{fire();setInterval(fire,2000);},700);
+
+// tooltip
+const tt=document.getElementById('tt');
+IDS.forEach(id=>{
+  ['a-'+id,'f-'+id].forEach(domId=>{
+    const el=document.getElementById(domId);if(!el)return;
+    el.addEventListener('mousemove',e=>{
+      const a=AGENTS[id];
+      document.getElementById('tt-n').textContent=a.label+' – '+a.role;
+      document.getElementById('tt-n').style.color=a.color;
+      document.getElementById('tt-d').textContent=a.desc;
+      tt.classList.add('show');tt.style.left=(e.clientX+14)+'px';tt.style.top=(e.clientY-52)+'px';
+    });
+    el.addEventListener('mouseleave',()=>tt.classList.remove('show'));
+    el.addEventListener('click',()=>{
+      const arr=curTab==='a'?bA:bF,pos2=curTab==='a'?posA:posF;
+      mkBeam(arr,pos2,id,'ORCH',AGENTS[id].color,5);
+      setTimeout(()=>mkBeam(arr,pos2,'ORCH',id,AGENTS[id].color,5),600);
+    });
+  });
+});
+</script>
+
+</body>
+</html>
