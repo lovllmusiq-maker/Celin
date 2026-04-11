@@ -1,0 +1,929 @@
+import { useState, useEffect } from “react”;
+
+const CATEGORIES = [
+{ id: “all”, label: “Tout le Djassa”, emoji: “🔥” },
+{ id: “transport”, label: “Gbaka & Wôrô”, emoji: “🚐” },
+{ id: “batiment”, label: “Maçon & Zouglou”, emoji: “🔨” },
+{ id: “tech”, label: “Téléphone & Web”, emoji: “📱” },
+{ id: “beaute”, label: “Salon & Coiffure”, emoji: “💅” },
+{ id: “food”, label: “Maquis & Attiéké”, emoji: “🍽️” },
+{ id: “comm”, label: “Commerce & Vente”, emoji: “🛍️” },
+{ id: “securite”, label: “Vigile & Gardien”, emoji: “💂” },
+{ id: “menage”, label: “Ménage & Nanny”, emoji: “🏠” },
+{ id: “moto”, label: “Moto-taxi Wôrô”, emoji: “🏍️” },
+];
+
+const PLANS = [
+{
+id: “gratuit”, name: “Gratuit”, emoji: “🆓”, price: 0, period: “”,
+color: “#888”, bg: “#F5F5F5”,
+features: [“5 candidatures/mois”, “Voir les offres de base”, “Profil simple”, “Code promo affilié inclus”],
+locked: [“Baras urgents cachés”, “Pas de contact direct patron”, “Pas de CV boosté”],
+},
+{
+id: “debrouillard”, name: “Débrouillard”, emoji: “💪”, price: 1500, period: “/mois”,
+color: “#FF6B2B”, bg: “#FFF0E6”, popular: true,
+features: [“Candidatures illimitées”, “Contact direct WhatsApp patron”, “Voir baras URGENTS”, “CV boosté en top liste”, “Alertes SMS nouveaux baras”, “Commission affilié 10%”],
+locked: [“Badge Patron Vérifié non inclus”],
+},
+{
+id: “patron”, name: “Patron”, emoji: “👑”, price: 4000, period: “/mois”,
+color: “#FFD93D”, bg: “#FFFBEC”,
+features: [“Tout Débrouillard inclus”, “Poster baras illimités”, “Badge Patron Vérifié ✅”, “Voir candidats en priorité”, “Stats de tes offres”, “Commission affilié 15%”, “Support prioritaire”],
+locked: [],
+},
+];
+
+const JOBS = [
+{ id: 1, cat: “tech”, urgent: true, top: true, titre: “On cherche Gars Réparation Téléphone”, lieu: “Adjamé, Marché Plateau”, quartier: “Adjamé”, salaire: “60k–100k/mois”, type: “Bara fixe”, poster: “Kouassi Yao”, avatar: “🧑🏿”, description: “Faut pouvoir réparer iPhone et Samsung. Connais les schémas c’est mieux. On t’apprend aussi si t’es motivé. Viens avec diplôme pas obligatoire, juste le savoir-faire.”, tags: [“iPhone”, “Samsung”, “Réparation”], heure: “2h”, reactions: { feu: 34, coeur: 12, top: 8 }, plan: “debrouillard” },
+{ id: 2, cat: “food”, urgent: true, top: false, titre: “Waitress & Barman pour Maquis Weekend”, lieu: “Cocody, Riviera 3”, quartier: “Cocody”, salaire: “3k/soir + pourboire”, type: “Weekend seulement”, poster: “Maman Adjoua”, avatar: “👩🏿”, description: “Maquis animé cherche du monde pour vendredi samedi dimanche. Filles et gars bienvenus. Sourire obligatoire. Repas fourni.”, tags: [“Maquis”, “Weekend”, “Boire”], heure: “5h”, reactions: { feu: 21, coeur: 45, top: 3 }, plan: “gratuit” },
+{ id: 3, cat: “batiment”, urgent: false, top: false, titre: “Carreleur expérimenté — Chantier Yopougon”, lieu: “Yopougon, Niangon”, quartier: “Yopougon”, salaire: “5k–8k/jour”, type: “Chantier 3 semaines”, poster: “Chef Gaoussou”, avatar: “👨🏿‍🦱”, description: “On a un gros chantier villa. Cherche carreleur qui connaît son affaire. Pas de blagueur.”, tags: [“Carrelage”, “Chantier”, “Villa”], heure: “1j”, reactions: { feu: 15, coeur: 4, top: 11 }, plan: “gratuit” },
+{ id: 4, cat: “beaute”, urgent: false, top: true, titre: “Coiffeuse/Coiffeur — Salon Moderne”, lieu: “Marcory, Zone 4”, quartier: “Marcory”, salaire: “40k fixe + % clients”, type: “Bara fixe”, poster: “Patronne Bintou”, avatar: “👩🏿‍🦱”, description: “Salon bien équipé cherche coiffeuse qui maîtrise tresses, tissage, défrisage. Ambiance bonne, clientèle fidèle.”, tags: [“Tresse”, “Tissage”, “Ongles”], heure: “3h”, reactions: { feu: 56, coeur: 89, top: 22 }, plan: “debrouillard” },
+{ id: 5, cat: “transport”, urgent: true, top: false, titre: “Chauffeur Gbaka — Route Yopougon–Plateau”, lieu: “Yopougon, Gare de Yop”, quartier: “Yopougon”, salaire: “Recette 60/40”, type: “Tous les jours 5h–20h”, poster: “Patron Koné”, avatar: “🧔🏿”, description: “Gbaka disponible, cherche chauffeur sérieux avec permis. 60% pour toi 40% pour moi.”, tags: [“Gbaka”, “Permis”, “Recette”], heure: “4h”, reactions: { feu: 29, coeur: 7, top: 5 }, plan: “gratuit” },
+{ id: 6, cat: “comm”, urgent: false, top: false, titre: “Vendeur/Vendeuse Cosmétiques Terrain”, lieu: “Tout Abidjan”, quartier: “Mobile”, salaire: “Commission 15% ventes”, type: “Indépendant”, poster: “Awa Distributeur”, avatar: “👩🏿‍💼”, description: “Distribue nos produits cosmétiques naturels. Tu choisis tes horaires. Formation offerte.”, tags: [“Cosmétiques”, “Commission”, “Libre”], heure: “1j”, reactions: { feu: 18, coeur: 32, top: 14 }, plan: “gratuit” },
+{ id: 7, cat: “securite”, urgent: false, top: false, titre: “Vigile de Nuit — Résidence Sécurisée”, lieu: “Cocody, Angré”, quartier: “Cocody”, salaire: “55k/mois + logement”, type: “Nuit 20h–6h”, poster: “Syndic Résidence”, avatar: “🏢”, description: “Résidence fermée cherche vigile de nuit. Logé sur place. Tenue fournie.”, tags: [“Nuit”, “Logé”, “Sécurité”], heure: “6h”, reactions: { feu: 9, coeur: 3, top: 7 }, plan: “patron” },
+{ id: 8, cat: “menage”, urgent: false, top: true, titre: “Femme de Ménage 3j/semaine”, lieu: “Cocody, Golf”, quartier: “Cocody”, salaire: “40k/mois”, type: “Lundi Mercredi Vendredi”, poster: “Famille Ouattara”, avatar: “🏡”, description: “Famille cherche femme de ménage douce et honnête. Repas fourni. Ambiance familiale.”, tags: [“Ménage”, “3 jours”, “Famille”], heure: “12h”, reactions: { feu: 22, coeur: 41, top: 9 }, plan: “gratuit” },
+{ id: 9, cat: “moto”, urgent: true, top: false, titre: “Gars Moto-taxi — Applicatif Zémidjan+”, lieu: “Abobo & Yopougon”, quartier: “Abobo”, salaire: “Moyenne 4k–8k/jour”, type: “Indépendant avec app”, poster: “Zémidjan+ CI”, avatar: “🏍️”, description: “Rejoins notre réseau de moto-taxi connecté. Permis A + carte grise requis.”, tags: [“Moto”, “Appli”, “Indépendant”], heure: “2j”, reactions: { feu: 67, coeur: 23, top: 18 }, plan: “debrouillard” },
+{ id: 10, cat: “tech”, urgent: false, top: false, titre: “Créateur Contenu / Reels Instagram”, lieu: “Télétravail”, quartier: “Remote”, salaire: “30k–80k par projet”, type: “Freelance”, poster: “Agence Kiffeurs CI”, avatar: “🎬”, description: “Si ton téléphone c’est un studio et tu sais filmer, monter les reels — on cherche quelqu’un comme toi.”, tags: [“Reels”, “Contenu”, “Créatif”], heure: “3j”, reactions: { feu: 88, coeur: 67, top: 33 }, plan: “patron” },
+];
+
+const QUARTIERS = [“Tous”, “Adjamé”, “Abobo”, “Yopougon”, “Cocody”, “Marcory”, “Mobile”, “Remote”];
+const ADMIN_CODE = “BARA2025”;
+
+const COMING_SOON = [
+{ emoji: “🤖”, title: “IA Coach Bara”, desc: “Un coach IA qui t’aide à rédiger ton CV, préparer les entretiens et négocier ton salaire — en nouchi ou en français.” },
+{ emoji: “📍”, title: “Carte des Baras”, desc: “Voir tous les emplois sur une carte interactive d’Abidjan. Filtrer par distance depuis chez toi.” },
+{ emoji: “💬”, title: “Chat Direct”, desc: “Discuter directement avec les patrons sans quitter l’app. Messagerie sécurisée intégrée.” },
+{ emoji: “📹”, title: “Vidéo CV 30s”, desc: “Envoie une vidéo de toi de 30 secondes au lieu d’un CV écrit. Les patrons voient qui tu es vraiment.” },
+{ emoji: “⭐”, title: “Système de Notes”, desc: “Note les patrons, les patrons te notent. Construis ta réputation de débrouillard sérieux.” },
+{ emoji: “💸”, title: “Orange Money & Wave”, desc: “Recevoir et envoyer de l’argent directement dans l’app. Orange Money & Wave intégrés.” },
+{ emoji: “📊”, title: “Dashboard Patron”, desc: “Les patrons voient leurs stats : vues, candidatures reçues, taux de conversion.” },
+{ emoji: “🏫”, title: “Formation Rapide”, desc: “Formations vidéo courtes pour upgrader tes compétences. Certificat MonBara à la clé.” },
+];
+
+const genCode = (name) => name.replace(/\s+/g, “”).toUpperCase().slice(0, 5) + Math.floor(1000 + Math.random() * 9000);
+
+// ─── SPLASH ───
+function SplashScreen({ onDone }) {
+const [pct, setPct] = useState(0);
+useEffect(() => {
+const t = setInterval(() => setPct(p => { if (p >= 100) { clearInterval(t); setTimeout(onDone, 300); return 100; } return p + 2; }), 40);
+return () => clearInterval(t);
+}, []);
+return (
+<div style={S.splash}>
+<div style={S.splashGlow} />
+<div style={{ position: “relative”, textAlign: “center” }}>
+<div style={{ fontSize: 80, marginBottom: 16 }}>💼</div>
+<h1 style={S.splashTitle}>MonBara</h1>
+<p style={{ color: “#FF6B2B”, fontSize: 16, fontWeight: 600, marginBottom: 10 }}>L’app du débrouillard ivoirien</p>
+<div style={{ display: “flex”, gap: 10, justifyContent: “center”, color: “#666”, fontSize: 12, marginBottom: 30 }}>
+<span>Trouver ton bara</span><span style={{ color: “#FF6B2B” }}>•</span><span>Gagner ta vie</span><span style={{ color: “#FF6B2B” }}>•</span><span>Kiffez</span>
+</div>
+<div style={{ width: 200, height: 4, background: “#222”, borderRadius: 2, overflow: “hidden”, margin: “0 auto” }}>
+<div style={{ width: `${pct}%`, height: “100%”, background: “linear-gradient(90deg,#FF6B2B,#FFD93D)”, borderRadius: 2, transition: “width 0.08s linear” }} />
+</div>
+<p style={{ color: “#555”, fontSize: 12, marginTop: 12 }}>🇨🇮 Abidjan & Côte d’Ivoire</p>
+</div>
+</div>
+);
+}
+
+// ─── AUTH ───
+function AuthScreen({ onAuth }) {
+const [mode, setMode] = useState(“login”);
+const [form, setForm] = useState({ nom: “”, email: “”, password: “”, code: “”, promo: “” });
+const [err, setErr] = useState(””);
+const [loading, setLoading] = useState(false);
+const up = (k, v) => setForm(f => ({ …f, [k]: v }));
+
+const handleRegister = () => {
+if (!form.nom || !form.email || !form.password) { setErr(“Remplis tous les champs frère !”); return; }
+setErr(””); setLoading(true);
+setTimeout(() => {
+setLoading(false);
+onAuth({ nom: form.nom, email: form.email, plan: “gratuit”, promoCode: genCode(form.nom), wallet: 0, gains: [], filleuls: [], joinDate: new Date().toLocaleDateString(“fr-FR”) });
+}, 1200);
+};
+
+const handleLogin = () => {
+if (!form.email || !form.password) { setErr(“Email et mot de passe requis !”); return; }
+setErr(””); setLoading(true);
+setTimeout(() => {
+setLoading(false);
+onAuth({
+nom: “Kouamé Demo”, email: form.email, plan: “debrouillard”,
+promoCode: “KOUA7842”, wallet: 12500,
+gains: [
+{ date: “08/04/2025”, desc: “Commission abonnement Adjoua K.”, montant: 150 },
+{ date: “05/04/2025”, desc: “Commission travail Sékou T.”, montant: 200 },
+{ date: “01/04/2025”, desc: “Commission abonnement Fatou B.”, montant: 150 },
+],
+filleuls: [
+{ nom: “Adjoua Kouassi”, plan: “debrouillard”, actif: true, gains: 350 },
+{ nom: “Sékou Touré”, plan: “debrouillard”, actif: true, gains: 400 },
+{ nom: “Fatou Bamba”, plan: “gratuit”, actif: false, gains: 150 },
+],
+joinDate: “12/01/2025”,
+});
+}, 1200);
+};
+
+return (
+<div style={S.authWrap}>
+<div style={S.authCard}>
+<div style={{ textAlign: “center”, marginBottom: 24 }}>
+<div style={{ fontSize: 52 }}>💼</div>
+<h2 style={S.authTitle}>MonBara</h2>
+<p style={{ color: “#888”, fontSize: 14 }}>
+{mode === “login” ? “Content de te revoir ! 👋” : “Rejoins le djassa 🔥”}
+</p>
+</div>
+
+```
+    {mode === "login" && (<>
+      <label style={S.label}>Email</label>
+      <input style={S.input} type="email" placeholder="ton@email.com" value={form.email} onChange={e => up("email", e.target.value)} />
+      <label style={S.label}>Mot de passe</label>
+      <input style={S.input} type="password" placeholder="••••••••" value={form.password} onChange={e => up("password", e.target.value)} />
+      {err && <p style={S.err}>{err}</p>}
+      <button style={S.mainBtn} onClick={handleLogin}>{loading ? "Connexion…" : "🔥 Se connecter"}</button>
+      <p style={S.switchText}>Pas encore inscrit ? <span style={S.link} onClick={() => { setErr(""); setMode("register"); }}>Crée ton compte</span></p>
+    </>)}
+
+    {mode === "register" && (<>
+      <label style={S.label}>Ton nom complet</label>
+      <input style={S.input} placeholder="Ex: Kouamé Yao" value={form.nom} onChange={e => up("nom", e.target.value)} />
+      <label style={S.label}>Email</label>
+      <input style={S.input} type="email" placeholder="ton@email.com" value={form.email} onChange={e => up("email", e.target.value)} />
+      <label style={S.label}>Mot de passe</label>
+      <input style={S.input} type="password" placeholder="Min 6 caractères" value={form.password} onChange={e => up("password", e.target.value)} />
+      <label style={S.label}>Code promo d'un ami ? (optionnel)</label>
+      <input style={S.input} placeholder="Ex: KOUA7842" value={form.promo} onChange={e => up("promo", e.target.value.toUpperCase())} />
+      {err && <p style={S.err}>{err}</p>}
+      <button style={S.mainBtn} onClick={handleRegister}>{loading ? "Création…" : "🚀 Créer mon compte"}</button>
+      <p style={S.switchText}>Déjà inscrit ? <span style={S.link} onClick={() => { setErr(""); setMode("login"); }}>Se connecter</span></p>
+    </>)}
+
+
+  </div>
+</div>
+```
+
+);
+}
+
+// ─── TOP BAR ───
+function TopBar({ user, onPost, onAdmin, notifs }) {
+const pc = { gratuit: “#888”, debrouillard: “#FF6B2B”, patron: “#FFD93D” };
+const pe = { gratuit: “🆓”, debrouillard: “💪”, patron: “👑” };
+return (
+<div style={S.topBar}>
+<div style={{ display: “flex”, alignItems: “center”, gap: 8 }}>
+<div style={S.topLogo}>💼</div>
+<div>
+<div style={{ fontFamily: “Georgia”, fontWeight: 900, fontSize: 17, color: “#1A1A1A” }}>MonBara</div>
+<div style={{ fontSize: 10, color: pc[user.plan], fontWeight: 700 }}>{pe[user.plan]} {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)}</div>
+</div>
+</div>
+<div style={{ display: “flex”, alignItems: “center”, gap: 6 }}>
+<button style={S.adminBtn} onClick={onAdmin}>⚙️ ADMIN</button>
+<button style={S.postBtn} onClick={onPost}>+ Bara</button>
+<button style={{ background: “none”, border: “none”, fontSize: 20, cursor: “pointer”, position: “relative”, padding: 4 }}>
+🔔{notifs > 0 && <span style={S.badge}>{notifs}</span>}
+</button>
+<div style={S.topAv}>{user.nom[0]}</div>
+</div>
+</div>
+);
+}
+
+// ─── JOB CARD ───
+function JobCard({ job, user, onOpen }) {
+const [reacted, setReacted] = useState(null);
+const [saved, setSaved] = useState(false);
+const locked = job.plan !== “gratuit” && user.plan === “gratuit”;
+return (
+<div style={{ …S.card, …(locked ? { opacity: 0.85, border: “1.5px dashed #E0D8CC” } : {}) }} onClick={() => onOpen(job, locked)}>
+{locked && <div style={S.lockBanner}>🔒 Réservé aux abonnés — Upgrades ton plan !</div>}
+<div style={{ display: “flex”, alignItems: “center”, gap: 10, marginBottom: 10 }}>
+<div style={S.cardAv}>{job.avatar}</div>
+<div style={{ flex: 1 }}>
+<div style={{ fontWeight: 700, fontSize: 13 }}>{job.poster}</div>
+<div style={{ fontSize: 11, color: “#999” }}>⏰ {job.heure} · 📍 {job.quartier}</div>
+</div>
+<div style={{ display: “flex”, gap: 4, alignItems: “center” }}>
+{job.urgent && <span style={S.urgBadge}>🚨 URGENT</span>}
+{job.top && <span style={S.topBadge}>⭐ TOP</span>}
+<button style={{ background: “none”, border: “none”, fontSize: 18, cursor: “pointer” }} onClick={e => { e.stopPropagation(); setSaved(!saved); }}>{saved ? “❤️” : “🤍”}</button>
+</div>
+</div>
+<h3 style={{ …S.cardTitle, …(locked ? { filter: “blur(2px)” } : {}) }}>{job.titre}</h3>
+<div style={{ display: “flex”, gap: 8, marginBottom: 8, flexWrap: “wrap” }}>
+<span style={S.infoOrange}>💰 {locked ? “•••••” : job.salaire}</span>
+<span style={S.infoGray}>📋 {job.type}</span>
+</div>
+<p style={{ fontSize: 13, color: “#666”, lineHeight: 1.5, margin: “0 0 10px”, …(locked ? { filter: “blur(3px)” } : {}) }}>{job.description.slice(0, 90)}…</p>
+<div style={{ display: “flex”, gap: 6, flexWrap: “wrap”, marginBottom: 10 }}>
+{job.tags.map(t => <span key={t} style={S.tag}>#{t}</span>)}
+</div>
+<div style={{ display: “flex”, gap: 6, alignItems: “center”, borderTop: “1px solid #F0EBE3”, paddingTop: 10 }} onClick={e => e.stopPropagation()}>
+{[[“🔥”, “feu”], [“❤️”, “coeur”], [“👆”, “top”]].map(([em, k]) => (
+<button key={k} style={{ …S.reactBtn, …(reacted === k ? { background: “#FFE4D6”, color: “#FF6B2B” } : {}) }} onClick={() => setReacted(reacted === k ? null : k)}>
+{em} {job.reactions[k] + (reacted === k ? 1 : 0)}
+</button>
+))}
+<button style={S.applyBtn} onClick={e => { e.stopPropagation(); onOpen(job, locked); }}>
+{locked ? “🔒 Voir” : “Postuler →”}
+</button>
+</div>
+</div>
+);
+}
+
+// ─── JOB MODAL ───
+function JobModal({ job, locked, onClose, onUpgrade }) {
+const [applied, setApplied] = useState(false);
+if (!job) return null;
+return (
+<div style={S.overlay} onClick={onClose}>
+<div style={S.sheet} onClick={e => e.stopPropagation()}>
+<button style={S.sheetClose} onClick={onClose}>✕</button>
+{locked ? (
+<div style={{ textAlign: “center”, padding: “30px 0”, clear: “both” }}>
+<div style={{ fontSize: 64 }}>🔒</div>
+<h3 style={{ fontFamily: “Georgia”, color: “#1A1A1A”, margin: “12px 0 8px” }}>Contenu réservé</h3>
+<p style={{ color: “#666”, fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>
+Ce bara est pour les abonnés <b>Débrouillard</b> ou <b>Patron</b>.<br/>Upgrades pour voir le contact et postuler !
+</p>
+<button style={S.mainBtn} onClick={() => { onClose(); onUpgrade(); }}>💎 Voir les plans</button>
+</div>
+) : (
+<>
+<div style={{ display: “flex”, alignItems: “center”, marginBottom: 12, clear: “both” }}>
+<span style={{ fontSize: 44, marginRight: 12 }}>{job.avatar}</span>
+<div style={{ flex: 1 }}>
+<div style={{ fontWeight: 800, fontSize: 15 }}>{job.poster}</div>
+<div style={{ fontSize: 12, color: “#888” }}>📍 {job.lieu}</div>
+</div>
+{job.urgent && <span style={S.urgBadge}>🚨 URGENT</span>}
+</div>
+<h2 style={{ fontFamily: “Georgia”, fontSize: 20, fontWeight: 900, margin: “0 0 16px”, lineHeight: 1.3 }}>{job.titre}</h2>
+<div style={{ display: “flex”, gap: 10, marginBottom: 16 }}>
+{[[“💰”, job.salaire, “Salaire”], [“📋”, job.type.split(” “)[0], “Type”], [“📍”, job.quartier, “Zone”]].map(([ic, v, l]) => (
+<div key={l} style={{ flex: 1, background: “#F5F0E8”, borderRadius: 14, padding: “10px 6px”, textAlign: “center” }}>
+<div style={{ fontSize: 20 }}>{ic}</div>
+<div style={{ fontWeight: 800, fontSize: 12, marginTop: 4 }}>{v}</div>
+<div style={{ fontSize: 10, color: “#888” }}>{l}</div>
+</div>
+))}
+</div>
+<div style={{ fontWeight: 700, fontSize: 13, color: “#FF6B2B”, marginBottom: 8 }}>📢 DESCRIPTION</div>
+<p style={{ fontSize: 14, color: “#444”, lineHeight: 1.6, margin: “0 0 14px” }}>{job.description}</p>
+<div style={{ display: “flex”, gap: 6, flexWrap: “wrap”, marginBottom: 16 }}>
+{job.tags.map(t => <span key={t} style={S.tag}>#{t}</span>)}
+</div>
+<div style={{ display: “flex”, gap: 10, marginBottom: 10 }}>
+<button style={{ flex: 1, background: “#25D366”, color: “#fff”, border: “none”, borderRadius: 14, padding: “13px 10px”, fontSize: 13, fontWeight: 700, cursor: “pointer” }}
+onClick={() => window.open(“https://wa.me/2250700000000”, “_blank”)}>💬 WhatsApp Patron</button>
+<button style={{ flex: 1, background: applied ? “#4CAF50” : “#FF6B2B”, color: “#fff”, border: “none”, borderRadius: 14, padding: “13px 10px”, fontSize: 13, fontWeight: 700, cursor: “pointer” }}
+onClick={() => setApplied(true)}>{applied ? “✅ Envoyé !” : “🔥 Je veux ce Bara !”}</button>
+</div>
+<div style={{ display: “flex”, gap: 8 }}>
+<button style={S.shareBtn}>📤 Partager</button>
+<button style={S.shareBtn}>🔖 Sauvegarder</button>
+</div>
+</>
+)}
+</div>
+</div>
+);
+}
+
+// ─── PLANS SCREEN ───
+function PlansScreen({ user, onSelect, onClose }) {
+const [paying, setPaying] = useState(null);
+const [done, setDone] = useState(null);
+const pay = (plan) => {
+setPaying(plan.id);
+setTimeout(() => { setPaying(null); setDone(plan.id); setTimeout(() => { onSelect(plan.id); onClose(); }, 1500); }, 2200);
+};
+return (
+<div style={S.overlay} onClick={onClose}>
+<div style={{ …S.sheet, maxHeight: “92vh” }} onClick={e => e.stopPropagation()}>
+<button style={S.sheetClose} onClick={onClose}>✕</button>
+<h2 style={{ fontFamily: “Georgia”, fontSize: 22, fontWeight: 900, marginBottom: 4 }}>💎 Plans MonBara</h2>
+<p style={{ color: “#888”, fontSize: 13, marginBottom: 16 }}>Choisisse ton niveau de débrouillardise !</p>
+{done && <div style={{ background: “#E8F5E9”, borderRadius: 12, padding: 14, textAlign: “center”, marginBottom: 12 }}><div style={{ fontSize: 32 }}>✅</div><b style={{ color: “#2E7D32” }}>Abonnement activé ! Bienvenue dans le club 🔥</b></div>}
+{paying && <div style={{ background: “#FFF3E0”, borderRadius: 12, padding: 14, textAlign: “center”, marginBottom: 12 }}><div style={{ fontSize: 32 }}>⏳</div><p style={{ color: “#E65100”, fontSize: 13 }}>Traitement paiement Orange Money / Wave…</p></div>}
+{PLANS.map(plan => (
+<div key={plan.id} style={{ background: “#fff”, border: `2px solid ${user.plan === plan.id ? "#4CAF50" : plan.popular ? "#FF6B2B" : "#E0D8CC"}`, borderRadius: 18, padding: 16, marginBottom: 12, position: “relative”, overflow: “hidden” }}>
+{plan.popular && <div style={{ position: “absolute”, top: 12, right: 12, background: “#FF6B2B”, color: “#fff”, borderRadius: 8, padding: “2px 8px”, fontSize: 10, fontWeight: 700 }}>⭐ POPULAIRE</div>}
+{user.plan === plan.id && <div style={{ position: “absolute”, top: 12, right: 12, background: “#4CAF50”, color: “#fff”, borderRadius: 8, padding: “2px 8px”, fontSize: 10, fontWeight: 700 }}>✅ TON PLAN</div>}
+<div style={{ display: “flex”, alignItems: “center”, gap: 10, marginBottom: 12 }}>
+<span style={{ fontSize: 36 }}>{plan.emoji}</span>
+<div>
+<div style={{ fontFamily: “Georgia”, fontSize: 18, fontWeight: 900 }}>{plan.name}</div>
+<div style={{ fontWeight: 800, color: plan.color, fontSize: 15 }}>{plan.price === 0 ? “Gratuit” : `${plan.price.toLocaleString()} FCFA${plan.period}`}</div>
+</div>
+</div>
+{plan.features.map(f => <div key={f} style={{ fontSize: 13, color: “#444”, padding: “2px 0”, display: “flex”, gap: 8 }}><span style={{ color: “#4CAF50” }}>✓</span>{f}</div>)}
+{plan.locked.map(f => <div key={f} style={{ fontSize: 13, color: “#ccc”, padding: “2px 0”, display: “flex”, gap: 8 }}><span>✗</span>{f}</div>)}
+{plan.id !== “gratuit” && user.plan !== plan.id && (
+<button style={{ width: “100%”, background: plan.color, color: plan.id === “patron” ? “#1A1A1A” : “#fff”, border: “none”, borderRadius: 12, padding: 12, fontWeight: 700, cursor: “pointer”, marginTop: 12, fontSize: 13 }}
+onClick={() => pay(plan)}>{paying === plan.id ? “⏳ Traitement…” : `🔥 Choisir ${plan.name}`}</button>
+)}
+</div>
+))}
+<div style={{ background: “#F5F0E8”, borderRadius: 14, padding: 14 }}>
+<div style={{ fontWeight: 800, fontSize: 13, marginBottom: 8 }}>💳 Modes de paiement acceptés</div>
+<div style={{ display: “flex”, gap: 8, flexWrap: “wrap” }}>
+{[“📱 Orange Money”, “💜 Wave”, “🏦 CinetPay”, “💳 Visa”].map(m => (
+<span key={m} style={{ background: “#fff”, borderRadius: 8, padding: “4px 10px”, fontSize: 12, border: “1px solid #E0D8CC” }}>{m}</span>
+))}
+</div>
+</div>
+</div>
+</div>
+);
+}
+
+// ─── AFFILIATE SCREEN ───
+function AffiliateScreen({ user }) {
+const [copied, setCopied] = useState(false);
+const copy = () => { navigator.clipboard?.writeText(user.promoCode).catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+const totalGains = (user.gains || []).reduce((s, g) => s + g.montant, 0);
+return (
+<div style={{ paddingBottom: 20 }}>
+<div style={{ background: “linear-gradient(135deg, #1A1A1A, #2D1810)”, padding: “24px 16px”, textAlign: “center” }}>
+<div style={{ fontSize: 48, marginBottom: 8 }}>💸</div>
+<h2 style={{ fontFamily: “Georgia”, color: “#fff”, fontSize: 22, margin: “0 0 6px” }}>Gagne de l’argent !</h2>
+<p style={{ color: “#ddd”, fontSize: 13, lineHeight: 1.6 }}>
+Invite tes amis avec ton code promo.<br/>
+Chaque abonnement et chaque bara décroché = <b style={{ color: “#FFD93D” }}>commission pour toi !</b>
+</p>
+</div>
+
+```
+  <div style={{ padding: "0 12px" }}>
+    {/* Promo code */}
+    <div style={{ background: "#fff", borderRadius: 18, padding: 20, margin: "12px 0", textAlign: "center", boxShadow: "0 3px 16px rgba(0,0,0,0.07)" }}>
+      <div style={{ fontSize: 12, color: "#888", fontWeight: 700, textTransform: "uppercase", marginBottom: 6 }}>Ton Code Promo Unique</div>
+      <div style={{ fontFamily: "Georgia", fontSize: 32, fontWeight: 900, letterSpacing: 4, color: "#FF6B2B" }}>{user.promoCode}</div>
+      <button style={{ ...S.mainBtn, marginTop: 10 }} onClick={copy}>{copied ? "✅ Copié !" : "📋 Copier le code"}</button>
+      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <button style={S.shareBtn} onClick={() => window.open(`https://wa.me/?text=Rejoins MonBara avec mon code ${user.promoCode} 🔥`, "_blank")}>💬 WhatsApp</button>
+        <button style={S.shareBtn}>📤 Autres</button>
+      </div>
+    </div>
+
+    {/* Commission rules */}
+    <div style={{ background: "#fff", borderRadius: 18, padding: 16, marginBottom: 12 }}>
+      <div style={{ fontWeight: 800, fontSize: 14, marginBottom: 12 }}>💰 Comment tu gagnes ta commission</div>
+      {[
+        ["📩", "Abonnement Débrouillard", "Ton filleul s'abonne → tu gagnes 10% = 150 FCFA/mois"],
+        ["👑", "Abonnement Patron", "Ton filleul s'abonne Patron → tu gagnes 10% = 400 FCFA/mois"],
+        ["🔨", "Bara décroché", "Ton filleul trouve un job → tu gagnes 5% du premier salaire"],
+      ].map(([ic, t, d]) => (
+        <div key={t} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "10px 0", borderBottom: "1px solid #F5F0E8" }}>
+          <div style={{ fontSize: 28, background: "#FFF0E6", borderRadius: 10, width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{ic}</div>
+          <div><div style={{ fontWeight: 700, fontSize: 13 }}>{t}</div><div style={{ color: "#888", fontSize: 12, marginTop: 2 }}>{d}</div></div>
+        </div>
+      ))}
+      <div style={{ background: "#FFF3E0", borderRadius: 10, padding: 10, marginTop: 10, fontSize: 12, color: "#E65100" }}>
+        ⬆️ Plan Patron = commissions <b>15%</b> au lieu de 10% sur les abonnements !
+      </div>
+    </div>
+
+    {/* Wallet */}
+    <div style={{ background: "linear-gradient(135deg, #1A1A1A, #2D1810)", borderRadius: 18, padding: 20, marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div>
+        <div style={{ fontSize: 12, color: "#FF6B2B", fontWeight: 700 }}>MON PORTEFEUILLE</div>
+        <div style={{ fontFamily: "Georgia", fontSize: 30, fontWeight: 900, color: "#fff" }}>{(user.wallet || totalGains).toLocaleString()} FCFA</div>
+      </div>
+      <button style={{ background: "#FF6B2B", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontWeight: 700, cursor: "pointer" }}>💸 Retirer</button>
+    </div>
+
+    {/* Filleuls */}
+    <div style={{ fontFamily: "Georgia", fontWeight: 800, fontSize: 14, marginBottom: 10 }}>👥 Mes Filleuls ({(user.filleuls || []).length})</div>
+    {(user.filleuls || []).map((f, i) => (
+      <div key={i} style={{ background: "#fff", borderRadius: 14, padding: "12px 14px", marginBottom: 8, display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ width: 38, height: 38, borderRadius: "50%", background: "#FFF0E6", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#FF6B2B", fontSize: 16 }}>{f.nom[0]}</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 700, fontSize: 13 }}>{f.nom}</div>
+          <div style={{ fontSize: 11, color: "#888" }}>
+            {f.plan === "gratuit" ? "🆓" : f.plan === "debrouillard" ? "💪" : "👑"} {f.plan}
+            {" · "}{f.actif ? <span style={{ color: "#4CAF50" }}>✅ Actif</span> : <span style={{ color: "#bbb" }}>Inactif</span>}
+          </div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontWeight: 800, color: "#FF6B2B" }}>+{f.gains} F</div>
+          <div style={{ fontSize: 10, color: "#999" }}>gagné</div>
+        </div>
+      </div>
+    ))}
+    {!(user.filleuls || []).length && <div style={{ textAlign: "center", padding: 20, color: "#888" }}><div style={{ fontSize: 40 }}>😔</div><p>Pas encore de filleul. Partage ton code !</p></div>}
+
+    {/* Gains history */}
+    <div style={{ fontFamily: "Georgia", fontWeight: 800, fontSize: 14, margin: "16px 0 10px" }}>📊 Historique des gains</div>
+    {(user.gains || []).map((g, i) => (
+      <div key={i} style={{ background: "#fff", borderRadius: 12, padding: "12px 14px", marginBottom: 8, display: "flex", alignItems: "center" }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>{g.desc}</div>
+          <div style={{ fontSize: 11, color: "#999" }}>{g.date}</div>
+        </div>
+        <div style={{ fontWeight: 800, color: "#4CAF50" }}>+{g.montant} F</div>
+      </div>
+    ))}
+  </div>
+</div>
+```
+
+);
+}
+
+// ─── COMING SOON ───
+function ComingSoonScreen() {
+return (
+<div style={{ padding: “0 12px 20px” }}>
+<div style={{ textAlign: “center”, padding: “24px 0 16px” }}>
+<div style={{ fontSize: 48 }}>🚀</div>
+<h2 style={{ fontFamily: “Georgia”, fontSize: 22, fontWeight: 900, margin: “8px 0 4px” }}>Bientôt sur MonBara</h2>
+<p style={{ color: “#888”, fontSize: 13 }}>On boss fort pour toi frère ! Ces features arrivent 🔥</p>
+</div>
+{COMING_SOON.map((f, i) => (
+<div key={i} style={{ background: “#fff”, borderRadius: 16, padding: 14, marginBottom: 10, display: “flex”, alignItems: “flex-start”, gap: 14, boxShadow: “0 2px 10px rgba(0,0,0,0.05)” }}>
+<div style={{ fontSize: 32, background: “#F5F0E8”, borderRadius: 12, width: 52, height: 52, display: “flex”, alignItems: “center”, justifyContent: “center”, flexShrink: 0 }}>{f.emoji}</div>
+<div style={{ flex: 1 }}>
+<div style={{ fontWeight: 800, fontSize: 14, marginBottom: 4 }}>{f.title}</div>
+<p style={{ fontSize: 12, color: “#666”, lineHeight: 1.5, margin: 0 }}>{f.desc}</p>
+</div>
+<div style={{ background: “#1A1A1A”, color: “#FFD93D”, borderRadius: 8, padding: “3px 8px”, fontSize: 10, fontWeight: 700, flexShrink: 0 }}>Bientôt</div>
+</div>
+))}
+<div style={{ background: “linear-gradient(135deg, #1A1A1A, #2D1810)”, borderRadius: 16, padding: 20, textAlign: “center” }}>
+<div style={{ fontSize: 32, marginBottom: 8 }}>🙏</div>
+<p style={{ color: “#fff”, fontWeight: 700, margin: “0 0 4px” }}>Tu veux une feature spéciale ?</p>
+<p style={{ color: “#aaa”, fontSize: 12, marginBottom: 12 }}>Envoie-nous ton idée sur WhatsApp !</p>
+<button style={{ background: “#FF6B2B”, color: “#fff”, border: “none”, borderRadius: 12, padding: “10px 20px”, fontWeight: 700, cursor: “pointer” }}
+onClick={() => window.open(“https://wa.me/2250700000000”, “_blank”)}>💬 Envoyer mon idée</button>
+</div>
+</div>
+);
+}
+
+// ─── ADMIN DASHBOARD ───
+function AdminModal({ onClose }) {
+const [code, setCode] = useState(””);
+const [auth, setAuth] = useState(false);
+const [err, setErr] = useState(””);
+const [tab, setTab] = useState(“stats”);
+
+if (!auth) return (
+<div style={S.overlay} onClick={onClose}>
+<div style={{ …S.sheet, maxHeight: 440 }} onClick={e => e.stopPropagation()}>
+<button style={S.sheetClose} onClick={onClose}>✕</button>
+<div style={{ textAlign: “center”, padding: “20px 0 16px”, clear: “both” }}>
+<div style={{ fontSize: 52 }}>🔐</div>
+<h3 style={{ fontFamily: “Georgia”, marginBottom: 4 }}>Accès Admin</h3>
+<p style={{ color: “#888”, fontSize: 13 }}>Entre le code secret pour accéder au tableau de bord.</p>
+</div>
+<input style={{ …S.input, letterSpacing: 4, textAlign: “center”, fontSize: 18, fontWeight: 700 }}
+placeholder=“CODE SECRET” value={code} onChange={e => setCode(e.target.value.toUpperCase())} />
+{err && <p style={S.err}>{err}</p>}
+<button style={S.mainBtn} onClick={() => { if (code === ADMIN_CODE) setAuth(true); else setErr(“Code incorrect ! 🔒”); }}>🔐 Accéder</button>
+<p style={{ textAlign: “center”, fontSize: 11, color: “#bbb”, marginTop: 8 }}>Hint: BARA + année actuelle 😉</p>
+</div>
+</div>
+);
+
+const TABS = [{ id: “stats”, l: “📊 Stats” }, { id: “users”, l: “👥 Users” }, { id: “revenue”, l: “💰 Revenus” }, { id: “affilies”, l: “🤝 Affiliés” }];
+const topAff = [
+{ nom: “Kouamé Yao”, code: “KOUA7842”, filleuls: 23, gains: “34 500” },
+{ nom: “Aminata Bah”, code: “AMIN9321”, filleuls: 18, gains: “27 000” },
+{ nom: “Sékou Diabaté”, code: “SEKO5512”, filleuls: 15, gains: “22 500” },
+{ nom: “Mariam Koné”, code: “MARI2234”, filleuls: 11, gains: “16 500” },
+];
+
+return (
+<div style={S.overlay} onClick={onClose}>
+<div style={{ …S.sheet, maxHeight: “95vh” }} onClick={e => e.stopPropagation()}>
+<button style={S.sheetClose} onClick={onClose}>✕</button>
+<div style={{ display: “flex”, alignItems: “center”, gap: 8, marginBottom: 16, clear: “both” }}>
+<span style={{ fontSize: 28 }}>⚙️</span>
+<div>
+<div style={{ fontFamily: “Georgia”, fontSize: 18, fontWeight: 900 }}>Admin Dashboard</div>
+<div style={{ fontSize: 11, color: “#FF6B2B” }}>MonBara CI — Accès restreint</div>
+</div>
+<div style={{ marginLeft: “auto”, background: “#E8F5E9”, color: “#2E7D32”, borderRadius: 8, padding: “4px 10px”, fontSize: 11, fontWeight: 700 }}>🟢 LIVE</div>
+</div>
+
+```
+    <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto" }}>
+      {TABS.map(t => (
+        <button key={t.id} style={{ flexShrink: 0, background: tab === t.id ? "#1A1A1A" : "#F5F0E8", color: tab === t.id ? "#FF6B2B" : "#666", border: "none", borderRadius: 10, padding: "7px 14px", fontSize: 12, cursor: "pointer" }}
+          onClick={() => setTab(t.id)}>{t.l}</button>
+      ))}
+    </div>
+
+    {tab === "stats" && (
+      <div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
+          {[["👥", "Utilisateurs", "2 847"], ["🟢", "Actifs 30j", "1 203"], ["📋", "Baras postés", "10 421"], ["📩", "Candidatures", "34 872"], ["✅", "Conversion", "68%"], ["📈", "Nouveaux/jour", "47"]].map(([ic, t, v]) => (
+            <div key={t} style={{ background: "#F5F0E8", borderRadius: 12, padding: 10, textAlign: "center" }}>
+              <div style={{ fontSize: 22 }}>{ic}</div>
+              <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>{t}</div>
+              <div style={{ fontFamily: "Georgia", fontSize: 20, fontWeight: 900, color: "#FF6B2B" }}>{v}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ background: "#F5F0E8", borderRadius: 12, padding: 14 }}>
+          <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 10 }}>📊 Répartition des plans</div>
+          {[["🆓 Gratuit", 1768, 2847, "#888"], ["💪 Débrouillard", 892, 2847, "#FF6B2B"], ["👑 Patron", 187, 2847, "#FFD93D"]].map(([n, v, tot, c]) => (
+            <div key={n} style={{ marginBottom: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 3 }}><span>{n}</span><span style={{ fontWeight: 700, color: c }}>{v}</span></div>
+              <div style={{ background: "#E0D8CC", borderRadius: 4, height: 8 }}>
+                <div style={{ width: `${(v / tot) * 100}%`, background: c, height: "100%", borderRadius: 4 }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {tab === "users" && (
+      <div>
+        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+          {[["👥", "Total", "2 847"], ["💪", "Débrouillards", "892"], ["👑", "Patrons", "187"]].map(([ic, l, v]) => (
+            <div key={l} style={{ flex: 1, background: "#F5F0E8", borderRadius: 12, padding: 12, textAlign: "center" }}>
+              <div style={{ fontSize: 22 }}>{ic}</div>
+              <div style={{ fontWeight: 900, color: "#FF6B2B", fontSize: 18 }}>{v}</div>
+              <div style={{ fontSize: 10, color: "#888" }}>{l}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8 }}>🏙️ Top Quartiers</div>
+        {[["Yopougon", 712], ["Adjamé", 534], ["Abobo", 489], ["Cocody", 367], ["Marcory", 245]].map(([q, n]) => (
+          <div key={q} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #F0EBE3", fontSize: 13 }}>
+            <span>📍 {q}</span><span style={{ fontWeight: 700, color: "#FF6B2B" }}>{n} users</span>
+          </div>
+        ))}
+      </div>
+    )}
+
+    {tab === "revenue" && (
+      <div>
+        <div style={{ background: "linear-gradient(135deg,#1A1A1A,#2D1810)", borderRadius: 16, padding: 20, textAlign: "center", marginBottom: 12 }}>
+          <div style={{ color: "#aaa", fontSize: 12 }}>REVENUS DU MOIS</div>
+          <div style={{ fontFamily: "Georgia", fontSize: 34, fontWeight: 900, color: "#FFD93D" }}>2 847 000 FCFA</div>
+          <div style={{ color: "#4CAF50", fontSize: 12, marginTop: 4 }}>▲ +23% vs mois dernier</div>
+        </div>
+        <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 13 }}>📅 Revenus 7 derniers jours</div>
+        {[["Lun", 89], ["Mar", 124], ["Mer", 97], ["Jeu", 145], ["Ven", 178], ["Sam", 203], ["Dim", 167]].map(([j, v]) => (
+          <div key={j} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <span style={{ fontSize: 12, width: 32 }}>{j}</span>
+            <div style={{ flex: 1, background: "#F5F0E8", borderRadius: 4, height: 10 }}>
+              <div style={{ width: `${(v / 210) * 100}%`, background: "#FF6B2B", height: "100%", borderRadius: 4 }} />
+            </div>
+            <span style={{ fontSize: 11, color: "#888", width: 56, textAlign: "right" }}>{v}k F</span>
+          </div>
+        ))}
+      </div>
+    )}
+
+    {tab === "affilies" && (
+      <div>
+        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+          {[["🤝", "Affiliés actifs", "423"], ["💸", "Commissions payées", "847 500 F"]].map(([ic, l, v]) => (
+            <div key={l} style={{ flex: 1, background: "#FFF0E6", border: "1px solid #FFD5B8", borderRadius: 12, padding: 12, textAlign: "center" }}>
+              <div style={{ fontSize: 22 }}>{ic}</div>
+              <div style={{ fontWeight: 900, color: "#FF6B2B", fontSize: 14 }}>{v}</div>
+              <div style={{ fontSize: 10, color: "#888" }}>{l}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>🏆 Top Apporteurs d'Affaires</div>
+        {topAff.map((a, i) => (
+          <div key={i} style={{ background: "#fff", border: "1.5px solid #F0EBE3", borderRadius: 12, padding: 12, marginBottom: 8, display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: ["#FFD93D33", "#E0E0E033", "#CD7F3233", "#F5F5F533"][i], border: `2px solid ${["#FFD93D","#aaa","#CD7F32","#ddd"][i]}`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 14 }}>{i + 1}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: 13 }}>{a.nom}</div>
+              <div style={{ fontSize: 11, color: "#888" }}>Code: <b style={{ color: "#FF6B2B" }}>{a.code}</b> · {a.filleuls} filleuls</div>
+            </div>
+            <div style={{ fontWeight: 800, color: "#4CAF50", fontSize: 13 }}>+{a.gains} F</div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
+```
+
+);
+}
+
+// ─── PROFILE SCREEN ───
+function ProfileScreen({ user, onUpgrade, onLogout }) {
+const pc = { gratuit: “#888”, debrouillard: “#FF6B2B”, patron: “#FFD93D” };
+const pe = { gratuit: “🆓”, debrouillard: “💪”, patron: “👑” };
+return (
+<div style={{ paddingBottom: 20 }}>
+<div style={{ background: “linear-gradient(135deg,#1A1A1A,#2D1810)”, padding: 24, textAlign: “center” }}>
+<div style={{ width: 72, height: 72, borderRadius: “50%”, background: “rgba(255,107,43,0.3)”, border: “3px solid #FF6B2B”, margin: “0 auto 12px”, display: “flex”, alignItems: “center”, justifyContent: “center”, fontWeight: 900, color: “#FF6B2B”, fontSize: 32 }}>{user.nom[0]}</div>
+<h2 style={{ fontFamily: “Georgia”, fontSize: 20, color: “#fff”, margin: “0 0 4px” }}>{user.nom}</h2>
+<p style={{ color: “#aaa”, fontSize: 12, marginBottom: 10 }}>📧 {user.email} · Depuis {user.joinDate}</p>
+<div style={{ display: “flex”, gap: 8, justifyContent: “center” }}>
+<span style={{ background: pc[user.plan], color: “#fff”, borderRadius: 10, padding: “4px 12px”, fontSize: 12, fontWeight: 700 }}>{pe[user.plan]} {user.plan}</span>
+<span style={{ background: “rgba(76,175,80,0.3)”, color: “#4CAF50”, borderRadius: 10, padding: “4px 12px”, fontSize: 12, fontWeight: 700 }}>✅ Vérifié</span>
+</div>
+</div>
+<div style={{ display: “flex”, gap: 1, background: “#E0D8CC” }}>
+{[[“12”, “Candidatures”], [“3”, “Embauches”], [“4.8⭐”, “Note”]].map(([v, l]) => (
+<div key={l} style={{ flex: 1, background: “#fff”, padding: “14px 10px”, textAlign: “center” }}>
+<div style={{ fontFamily: “Georgia”, fontSize: 20, fontWeight: 900, color: “#FF6B2B” }}>{v}</div>
+<div style={{ fontSize: 11, color: “#888” }}>{l}</div>
+</div>
+))}
+</div>
+<div style={{ padding: “12px” }}>
+<div style={{ background: “#FFF0E6”, border: “1.5px solid #FFD5B8”, borderRadius: 14, padding: 14, marginBottom: 12 }}>
+<div style={{ fontWeight: 700, fontSize: 13, color: “#FF6B2B”, marginBottom: 4 }}>🏷️ Mon Code Promo</div>
+<div style={{ fontFamily: “Georgia”, fontSize: 24, fontWeight: 900, letterSpacing: 2, color: “#1A1A1A” }}>{user.promoCode}</div>
+<div style={{ fontSize: 12, color: “#888”, marginTop: 4 }}>Partage ce code et gagne des commissions !</div>
+</div>
+{user.plan === “gratuit” && (
+<div style={{ background: “linear-gradient(135deg,#FF6B2B,#E55B1F)”, borderRadius: 14, padding: 16, marginBottom: 12, textAlign: “center” }}>
+<div style={{ fontSize: 28, marginBottom: 6 }}>🚀</div>
+<div style={{ fontWeight: 800, fontSize: 14, color: “#fff”, marginBottom: 6 }}>Upgrades ton plan !</div>
+<p style={{ color: “rgba(255,255,255,0.85)”, fontSize: 12, marginBottom: 10 }}>Accède aux baras urgents, contact direct et plus de commissions.</p>
+<button style={{ background: “#fff”, color: “#FF6B2B”, border: “none”, borderRadius: 10, padding: “8px 20px”, fontWeight: 800, fontSize: 13, cursor: “pointer” }} onClick={onUpgrade}>Voir les plans 💎</button>
+</div>
+)}
+<div style={{ background: “#fff”, borderRadius: 14, overflow: “hidden”, marginBottom: 12 }}>
+{[“🛠️ Mes compétences”, “📄 Mon CV rapide”, “🔔 Notifications”, “🌍 Langue — Français”, “🔒 Sécurité”, “❓ Aide & Contact”, “⭐ Noter l’app”].map(item => (
+<div key={item} style={{ display: “flex”, justifyContent: “space-between”, alignItems: “center”, padding: “13px 16px”, borderBottom: “1px solid #F5F0E8”, fontSize: 14, cursor: “pointer” }}>
+<span>{item}</span><span style={{ color: “#999” }}>→</span>
+</div>
+))}
+</div>
+<button style={{ width: “100%”, background: “#FFF5F5”, color: “#FF3B30”, border: “1.5px solid #FFD5D5”, borderRadius: 12, padding: 14, fontSize: 14, fontWeight: 700, cursor: “pointer” }} onClick={onLogout}>
+🚪 Se déconnecter
+</button>
+</div>
+</div>
+);
+}
+
+// ─── POST MODAL ───
+function PostModal({ onClose }) {
+const [step, setStep] = useState(1);
+const [form, setForm] = useState({ titre: “”, cat: “”, lieu: “”, salaire: “”, desc: “” });
+const up = (k, v) => setForm(f => ({ …f, [k]: v }));
+return (
+<div style={S.overlay} onClick={onClose}>
+<div style={{ …S.sheet, maxHeight: “88vh” }} onClick={e => e.stopPropagation()}>
+<button style={S.sheetClose} onClick={onClose}>✕</button>
+<h2 style={{ fontFamily: “Georgia”, fontSize: 20, fontWeight: 900, marginBottom: 4 }}>📢 Poster un Bara</h2>
+<p style={{ color: “#888”, fontSize: 13, marginBottom: 16 }}>Explique bien — les bons candidats vont venir !</p>
+<div style={{ display: “flex”, gap: 6, marginBottom: 20 }}>
+{[“Infos”, “Détails”, “Publier”].map((s, i) => (
+<div key={s} style={{ flex: 1, background: step > i ? “#FF6B2B” : “#F5F0E8”, color: step > i ? “#fff” : “#888”, borderRadius: 10, padding: 8, textAlign: “center”, fontSize: 12, fontWeight: 600 }}>{s}</div>
+))}
+</div>
+{step === 1 && (<>
+<label style={S.label}>Titre du bara *</label>
+<input style={S.input} placeholder=“Ex: Cherche électricien Yopougon” value={form.titre} onChange={e => up(“titre”, e.target.value)} />
+<label style={S.label}>Catégorie *</label>
+<select style={S.input} value={form.cat} onChange={e => up(“cat”, e.target.value)}>
+<option value="">Choisir…</option>
+{CATEGORIES.slice(1).map(c => <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}
+</select>
+<label style={S.label}>Quartier / Lieu *</label>
+<input style={S.input} placeholder=“Ex: Adjamé, Marché” value={form.lieu} onChange={e => up(“lieu”, e.target.value)} />
+</>)}
+{step === 2 && (<>
+<label style={S.label}>Salaire / Rémunération</label>
+<input style={S.input} placeholder=“Ex: 50k/mois ou 5k/jour” value={form.salaire} onChange={e => up(“salaire”, e.target.value)} />
+<label style={S.label}>Décris le bara *</label>
+<textarea style={{ …S.input, height: 110, resize: “none” }} placeholder=“Explique ce que tu cherches, les conditions…” value={form.desc} onChange={e => up(“desc”, e.target.value)} />
+</>)}
+{step === 3 && (
+<div style={{ textAlign: “center”, padding: “24px 0” }}>
+<div style={{ fontSize: 64 }}>✅</div>
+<h3 style={{ fontFamily: “Georgia”, color: “#FF6B2B” }}>Ton bara est prêt !</h3>
+<p style={{ color: “#888”, fontSize: 13 }}>Il sera visible par tous les débrouillards de CI !</p>
+<button style={{ …S.mainBtn, marginTop: 16 }} onClick={onClose}>🔥 Publier maintenant</button>
+</div>
+)}
+{step < 3 && (
+<div style={{ display: “flex”, gap: 10, marginTop: 20 }}>
+{step > 1 && <button style={{ flex: 1, background: “#F5F0E8”, color: “#666”, border: “none”, borderRadius: 12, padding: 12, cursor: “pointer” }} onClick={() => setStep(s => s - 1)}>← Retour</button>}
+<button style={{ flex: 2, background: “#FF6B2B”, color: “#fff”, border: “none”, borderRadius: 12, padding: 12, fontWeight: 700, cursor: “pointer” }} onClick={() => setStep(s => s + 1)}>
+{step === 2 ? “Publier 🚀” : “Suivant →”}
+</button>
+</div>
+)}
+</div>
+</div>
+);
+}
+
+// ─── BOTTOM NAV ───
+function BottomNav({ active, onChange }) {
+const tabs = [{ id: “home”, l: “Djassa”, ic: “🏠” }, { id: “plans”, l: “Plans”, ic: “💎” }, { id: “affilie”, l: “Gagner”, ic: “💸” }, { id: “soon”, l: “Bientôt”, ic: “🚀” }, { id: “profil”, l: “Profil”, ic: “👤” }];
+return (
+<div style={S.bottomNav}>
+{tabs.map(t => (
+<button key={t.id} style={{ flex: 1, background: “none”, border: “none”, padding: “10px 0 14px”, cursor: “pointer”, display: “flex”, flexDirection: “column”, alignItems: “center”, gap: 2, borderTop: active === t.id ? “2px solid #FF6B2B” : “2px solid transparent” }}
+onClick={() => onChange(t.id)}>
+<span style={{ fontSize: 20 }}>{t.ic}</span>
+<span style={{ fontSize: 10, color: active === t.id ? “#FF6B2B” : “#999”, fontWeight: 600 }}>{t.l}</span>
+</button>
+))}
+</div>
+);
+}
+
+// ─── MAIN ───
+export default function MonBara() {
+const [phase, setPhase] = useState(“splash”);
+const [user, setUser] = useState(null);
+const [tab, setTab] = useState(“home”);
+const [search, setSearch] = useState(””);
+const [activeCat, setActiveCat] = useState(“all”);
+const [activeQ, setActiveQ] = useState(“Tous”);
+const [selectedJob, setSelectedJob] = useState(null);
+const [jobLocked, setJobLocked] = useState(false);
+const [showPost, setShowPost] = useState(false);
+const [showPlans, setShowPlans] = useState(false);
+const [showAdmin, setShowAdmin] = useState(false);
+
+if (phase === “splash”) return <SplashScreen onDone={() => setPhase(“auth”)} />;
+if (phase === “auth”) return <AuthScreen onAuth={u => { setUser(u); setPhase(“app”); }} />;
+
+const filtered = JOBS.filter(j => {
+const mc = activeCat === “all” || j.cat === activeCat;
+const mq = activeQ === “Tous” || j.quartier === activeQ;
+const ms = !search || j.titre.toLowerCase().includes(search.toLowerCase()) || j.tags.some(t => t.toLowerCase().includes(search.toLowerCase()));
+return mc && mq && ms;
+});
+
+return (
+<div style={S.app}>
+<TopBar user={user} onPost={() => setShowPost(true)} onAdmin={() => setShowAdmin(true)} notifs={3} />
+
+```
+  <div style={S.scroll}>
+    {tab === "home" && (
+      <>
+        <div style={{ background: "linear-gradient(135deg,#1A1A1A,#2D1810)", padding: "18px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+          <div>
+            <div style={{ fontFamily: "Georgia", fontSize: 22, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Cherche ton Bara 🔥</div>
+            <div style={{ fontSize: 12, color: "#aaa" }}>Des milliers de jobs t'attendent en CI !</div>
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            {[["2.4k", "Baras"], ["890", "Patrons"]].map(([v, l]) => (
+              <div key={l} style={{ background: "rgba(255,107,43,0.2)", border: "1px solid rgba(255,107,43,0.4)", borderRadius: 10, padding: "8px 12px", textAlign: "center", color: "#FF6B2B", fontSize: 12 }}>
+                <b style={{ display: "block" }}>{v}</b>{l}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ padding: "0 12px" }}>
+          <div style={{ display: "flex", alignItems: "center", background: "#fff", borderRadius: 14, padding: "10px 14px", margin: "12px 0 8px", boxShadow: "0 2px 8px rgba(0,0,0,0.06)", gap: 8 }}>
+            <span style={{ fontSize: 18 }}>🔍</span>
+            <input style={{ flex: 1, border: "none", outline: "none", fontSize: 14, background: "transparent", fontFamily: "Georgia" }} placeholder="Cherche ton bara…" value={search} onChange={e => setSearch(e.target.value)} />
+            {search && <button style={{ background: "none", border: "none", color: "#999", cursor: "pointer" }} onClick={() => setSearch("")}>✕</button>}
+          </div>
+
+          <div style={{ marginBottom: 8 }}>
+            <span style={{ fontSize: 12, color: "#888", fontWeight: 600, marginBottom: 4, display: "block" }}>📍 Quartier</span>
+            <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
+              {QUARTIERS.map(q => (
+                <button key={q} style={{ flexShrink: 0, background: activeQ === q ? "#1A1A1A" : "#fff", color: activeQ === q ? "#FF6B2B" : "#555", border: `1.5px solid ${activeQ === q ? "#1A1A1A" : "#E0D8CC"}`, borderRadius: 20, padding: "5px 12px", fontSize: 12, cursor: "pointer" }}
+                  onClick={() => setActiveQ(q)}>{q}</button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 8 }}>
+            <span style={{ fontSize: 12, color: "#888", fontWeight: 600, marginBottom: 4, display: "block" }}>💼 Métier</span>
+            <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
+              {CATEGORIES.map(c => (
+                <button key={c.id} style={{ flexShrink: 0, background: activeCat === c.id ? "#FF6B2B" : "#fff", color: activeCat === c.id ? "#fff" : "#555", border: `1.5px solid ${activeCat === c.id ? "#FF6B2B" : "#E0D8CC"}`, borderRadius: 20, padding: "5px 12px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}
+                  onClick={() => setActiveCat(c.id)}>{c.emoji} {c.label}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 16px 8px" }}>
+          <span style={{ fontFamily: "Georgia", fontWeight: 700, fontSize: 15 }}>🔥 Baras du Moment</span>
+          <span style={{ fontSize: 12, color: "#FF6B2B", fontWeight: 700 }}>{filtered.length} baras</span>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 12px" }}>
+          {filtered.length === 0
+            ? <div style={{ textAlign: "center", padding: 40, color: "#888" }}><div style={{ fontSize: 48 }}>😔</div><p>Pas de bara trouvé…</p></div>
+            : filtered.map(job => <JobCard key={job.id} job={job} user={user} onOpen={(j, l) => { setSelectedJob(j); setJobLocked(l); }} />)
+          }
+        </div>
+      </>
+    )}
+
+    {tab === "plans" && (
+      <div style={{ paddingBottom: 20 }}>
+        <div style={{ textAlign: "center", padding: "20px 16px 8px" }}>
+          <div style={{ fontSize: 48 }}>💎</div>
+          <h2 style={{ fontFamily: "Georgia", fontSize: 22, fontWeight: 900, margin: "8px 0 4px" }}>Plans MonBara</h2>
+          <p style={{ color: "#888", fontSize: 13 }}>Choisisse ton niveau de débrouillardise !</p>
+        </div>
+        <div style={{ padding: "0 12px" }}>
+          {PLANS.map(plan => (
+            <div key={plan.id} style={{ background: "#fff", border: `2px solid ${user.plan === plan.id ? "#4CAF50" : plan.popular ? "#FF6B2B" : "#E0D8CC"}`, borderRadius: 18, padding: 16, marginBottom: 12, position: "relative", overflow: "hidden" }}>
+              {plan.popular && <div style={{ position: "absolute", top: 12, right: 12, background: "#FF6B2B", color: "#fff", borderRadius: 8, padding: "2px 8px", fontSize: 10, fontWeight: 700 }}>⭐ POPULAIRE</div>}
+              {user.plan === plan.id && <div style={{ position: "absolute", top: 12, right: 12, background: "#4CAF50", color: "#fff", borderRadius: 8, padding: "2px 8px", fontSize: 10, fontWeight: 700 }}>✅ TON PLAN</div>}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                <span style={{ fontSize: 36 }}>{plan.emoji}</span>
+                <div>
+                  <div style={{ fontFamily: "Georgia", fontSize: 18, fontWeight: 900 }}>{plan.name}</div>
+                  <div style={{ fontWeight: 800, color: plan.color, fontSize: 15 }}>{plan.price === 0 ? "Gratuit" : `${plan.price.toLocaleString()} FCFA${plan.period}`}</div>
+                </div>
+              </div>
+              {plan.features.map(f => <div key={f} style={{ fontSize: 13, color: "#444", padding: "2px 0", display: "flex", gap: 8 }}><span style={{ color: "#4CAF50" }}>✓</span>{f}</div>)}
+              {plan.locked.map(f => <div key={f} style={{ fontSize: 13, color: "#ccc", padding: "2px 0", display: "flex", gap: 8 }}><span>✗</span>{f}</div>)}
+              {plan.id !== "gratuit" && user.plan !== plan.id && (
+                <button style={{ width: "100%", background: plan.color, color: plan.id === "patron" ? "#1A1A1A" : "#fff", border: "none", borderRadius: 12, padding: 12, fontWeight: 700, cursor: "pointer", marginTop: 12, fontSize: 13 }}
+                  onClick={() => setShowPlans(true)}>🔥 Choisir {plan.name}</button>
+              )}
+            </div>
+          ))}
+          <div style={{ background: "#F5F0E8", borderRadius: 14, padding: 14 }}>
+            <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 8 }}>💳 Paiement accepté</div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {["📱 Orange Money", "💜 Wave", "🏦 CinetPay", "💳 Visa"].map(m => (
+                <span key={m} style={{ background: "#fff", borderRadius: 8, padding: "4px 10px", fontSize: 12, border: "1px solid #E0D8CC" }}>{m}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {tab === "affilie" && <AffiliateScreen user={user} />}
+    {tab === "soon" && <ComingSoonScreen />}
+    {tab === "profil" && <ProfileScreen user={user} onUpgrade={() => setTab("plans")} onLogout={() => { setUser(null); setPhase("auth"); }} />}
+  </div>
+
+  <BottomNav active={tab} onChange={setTab} />
+
+  {selectedJob && <JobModal job={selectedJob} locked={jobLocked} onClose={() => setSelectedJob(null)} onUpgrade={() => { setSelectedJob(null); setTab("plans"); }} />}
+  {showPost && <PostModal onClose={() => setShowPost(false)} />}
+  {showPlans && <PlansScreen user={user} onSelect={id => setUser(u => ({ ...u, plan: id }))} onClose={() => setShowPlans(false)} />}
+  {showAdmin && <AdminModal onClose={() => setShowAdmin(false)} />}
+</div>
+```
+
+);
+}
+
+// ─── STYLES ───
+const S = {
+app: { fontFamily: “‘Georgia’, serif”, background: “#F5F0E8”, minHeight: “100vh”, maxWidth: 430, margin: “0 auto”, position: “relative”, overflowX: “hidden” },
+scroll: { overflowY: “auto”, height: “calc(100vh - 114px)”, paddingBottom: 20 },
+splash: { position: “fixed”, inset: 0, background: “#0A0A0A”, display: “flex”, alignItems: “center”, justifyContent: “center”, zIndex: 999 },
+splashGlow: { position: “absolute”, inset: 0, background: “radial-gradient(ellipse at 50% 60%, #FF6B2B22 0%, transparent 70%)” },
+splashTitle: { fontFamily: “Georgia”, fontSize: 52, fontWeight: 900, color: “#fff”, margin: “0 0 8px” },
+authWrap: { minHeight: “100vh”, display: “flex”, alignItems: “center”, justifyContent: “center”, background: “#F5F0E8”, padding: 16 },
+authCard: { background: “#fff”, borderRadius: 24, padding: 24, width: “100%”, maxWidth: 380, boxShadow: “0 8px 40px rgba(0,0,0,0.12)” },
+authTitle: { fontFamily: “Georgia”, fontSize: 28, fontWeight: 900, color: “#1A1A1A”, margin: “0 0 4px” },
+label: { display: “block”, fontSize: 13, fontWeight: 700, color: “#333”, marginBottom: 6, marginTop: 12 },
+input: { width: “100%”, border: “1.5px solid #E0D8CC”, borderRadius: 12, padding: “10px 12px”, fontSize: 14, outline: “none”, fontFamily: “Georgia, serif”, boxSizing: “border-box”, background: “#FAFAF8” },
+mainBtn: { width: “100%”, background: “#FF6B2B”, color: “#fff”, border: “none”, borderRadius: 14, padding: 14, fontSize: 14, fontWeight: 700, cursor: “pointer”, fontFamily: “Georgia”, marginTop: 6 },
+err: { color: “#FF3B30”, fontSize: 12, margin: “6px 0 0”, fontFamily: “sans-serif” },
+switchText: { textAlign: “center”, fontSize: 13, color: “#888”, marginTop: 14, fontFamily: “sans-serif” },
+link: { color: “#FF6B2B”, fontWeight: 700, cursor: “pointer” },
+topBar: { display: “flex”, alignItems: “center”, justifyContent: “space-between”, padding: “10px 12px”, background: “#fff”, boxShadow: “0 2px 12px rgba(0,0,0,0.08)”, position: “sticky”, top: 0, zIndex: 100 },
+topLogo: { fontSize: 24, background: “#FF6B2B”, borderRadius: 10, width: 36, height: 36, display: “flex”, alignItems: “center”, justifyContent: “center” },
+adminBtn: { background: “#1A1A1A”, color: “#FFD93D”, border: “none”, borderRadius: 10, padding: “5px 10px”, fontSize: 11, fontWeight: 700, cursor: “pointer” },
+postBtn: { background: “#FF6B2B”, color: “#fff”, border: “none”, borderRadius: 10, padding: “5px 10px”, fontSize: 11, fontWeight: 700, cursor: “pointer” },
+badge: { position: “absolute”, top: 0, right: 0, background: “#FF3B30”, color: “#fff”, borderRadius: “50%”, width: 14, height: 14, fontSize: 9, display: “flex”, alignItems: “center”, justifyContent: “center”, fontWeight: 700 },
+topAv: { width: 30, height: 30, borderRadius: “50%”, background: “#FFE4D6”, display: “flex”, alignItems: “center”, justifyContent: “center”, fontWeight: 900, color: “#FF6B2B”, fontSize: 14 },
+card: { background: “#fff”, borderRadius: 18, padding: 16, boxShadow: “0 3px 16px rgba(0,0,0,0.07)”, cursor: “pointer”, overflow: “hidden” },
+lockBanner: { background: “linear-gradient(90deg,#1A1A1A,#2D1810)”, color: “#FFD93D”, fontSize: 11, fontWeight: 700, padding: “6px 12px”, borderRadius: 8, marginBottom: 10, textAlign: “center” },
+cardAv: { fontSize: 30, background: “#FFF3EC”, borderRadius: 12, width: 44, height: 44, display: “flex”, alignItems: “center”, justifyContent: “center”, flexShrink: 0 },
+cardTitle: { fontFamily: “Georgia”, fontSize: 15, fontWeight: 800, color: “#1A1A1A”, margin: “0 0 8px”, lineHeight: 1.3 },
+infoOrange: { background: “#FFF0E6”, color: “#FF6B2B”, borderRadius: 8, padding: “3px 10px”, fontSize: 11, fontWeight: 700 },
+infoGray: { background: “#F3F3F3”, color: “#666”, borderRadius: 8, padding: “3px 10px”, fontSize: 11 },
+tag: { background: “#F0EBE3”, color: “#888”, borderRadius: 8, padding: “2px 8px”, fontSize: 11 },
+urgBadge: { background: “#FF3B30”, color: “#fff”, borderRadius: 8, padding: “2px 7px”, fontSize: 10, fontWeight: 700, whiteSpace: “nowrap” },
+topBadge: { background: “#FFD93D”, color: “#1A1A1A”, borderRadius: 8, padding: “2px 7px”, fontSize: 10, fontWeight: 700, whiteSpace: “nowrap” },
+reactBtn: { background: “#F5F0E8”, border: “none”, borderRadius: 10, padding: “5px 10px”, fontSize: 12, cursor: “pointer”, color: “#666” },
+applyBtn: { marginLeft: “auto”, background: “#1A1A1A”, color: “#FF6B2B”, border: “none”, borderRadius: 12, padding: “7px 14px”, fontSize: 12, fontWeight: 700, cursor: “pointer” },
+overlay: { position: “fixed”, inset: 0, background: “rgba(0,0,0,0.65)”, zIndex: 200, display: “flex”, alignItems: “flex-end”, backdropFilter: “blur(4px)” },
+sheet: { background: “#fff”, borderRadius: “24px 24px 0 0”, width: “100%”, maxWidth: 430, margin: “0 auto”, padding: 20, overflowY: “auto”, maxHeight: “92vh” },
+sheetClose: { background: “#F5F0E8”, border: “none”, borderRadius: “50%”, width: 32, height: 32, fontSize: 16, cursor: “pointer”, float: “right”, marginBottom: 16 },
+shareBtn: { flex: 1, background: “#F5F0E8”, color: “#666”, border: “none”, borderRadius: 12, padding: 10, fontSize: 12, cursor: “pointer” },
+bottomNav: { position: “fixed”, bottom: 0, left: “50%”, transform: “translateX(-50%)”, width: “100%”, maxWidth: 430, background: “#fff”, display: “flex”, borderTop: “1px solid #ECECEC”, boxShadow: “0 -4px 20px rgba(0,0,0,0.08)”, zIndex: 100 },
+};
