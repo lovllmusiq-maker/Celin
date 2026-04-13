@@ -1,0 +1,892 @@
+import { useState, useCallback, useEffect } from “react”;
+
+const TEAMS = {
+france:     { name:“France”,        flag:“🇫🇷”, jersey:”#1a3a9c”, short:”#1a3a9c”, socks:”#fff”,    accent:”#ED2939”, gkJersey:”#22aa44”, gkShort:”#22aa44”, skin:”#f5c5a3”, hair:”#2c1a0e”, text:”#fff”,  crowd:”#1a3a9c” },
+allemagne:  { name:“Allemagne”,     flag:“🇩🇪”, jersey:”#dddddd”, short:”#111111”, socks:”#dddddd”,  accent:”#DD0000”, gkJersey:”#ff6600”, gkShort:”#ff6600”, skin:”#f5c5a3”, hair:”#4a3a2a”, text:”#111”,  crowd:”#cccccc” },
+bresil:     { name:“Bresil”,        flag:“🇧🇷”, jersey:”#FFDF00”, short:”#1a5c2a”, socks:”#1a5c2a”,  accent:”#009C3B”, gkJersey:”#3366ff”, gkShort:”#3366ff”, skin:”#c8895a”, hair:”#1a0a00”, text:”#111”,  crowd:”#FFDF00” },
+argentine:  { name:“Argentine”,     flag:“🇦🇷”, jersey:”#74ACDF”, short:”#000000”, socks:”#74ACDF”,  accent:”#74ACDF”, gkJersey:”#cc0000”, gkShort:”#cc0000”, skin:”#f5c5a3”, hair:”#2c1a0e”, text:”#222”,  crowd:”#74ACDF” },
+cotedivoire:{ name:“Cote dIvoire”,  flag:“🇨🇮”, jersey:”#F77F00”, short:”#ffffff”, socks:”#009A44”,  accent:”#009A44”, gkJersey:”#9900cc”, gkShort:”#9900cc”, skin:”#5c3317”, hair:”#0a0500”, text:”#fff”,  crowd:”#F77F00” },
+espagne:    { name:“Espagne”,       flag:“🇪🇸”, jersey:”#c01a20”, short:”#c01a20”, socks:”#F1BF00”,  accent:”#F1BF00”, gkJersey:”#006600”, gkShort:”#006600”, skin:”#f0c090”, hair:”#3a2010”, text:”#fff”,  crowd:”#c01a20” },
+portugal:   { name:“Portugal”,      flag:“🇵🇹”, jersey:”#006600”, short:”#006600”, socks:”#FF0000”,  accent:”#FF0000”, gkJersey:”#ffcc00”, gkShort:”#ffcc00”, skin:”#d4a070”, hair:”#1a0a00”, text:”#fff”,  crowd:”#006600” },
+maroc:      { name:“Maroc”,         flag:“🇲🇦”, jersey:”#c1272d”, short:”#c1272d”, socks:”#006233”,  accent:”#006233”, gkJersey:”#ff9900”, gkShort:”#ff9900”, skin:”#8B6340”, hair:”#0a0500”, text:”#fff”,  crowd:”#c1272d” },
+angleterre: { name:“Angleterre”,    flag:“🏴󠁧󠁢󠁥󠁮󠁧󠁿”, jersey:”#eeeeee”, short:”#111111”, socks:”#eeeeee”,  accent:”#CF081F”, gkJersey:”#ff6699”, gkShort:”#ff6699”, skin:”#f5c5a3”, hair:”#5a4030”, text:”#333”,  crowd:”#eeeeee” },
+usa:        { name:“USA”,           flag:“🇺🇸”, jersey:”#002868”, short:”#ffffff”, socks:”#002868”,  accent:”#BF0A30”, gkJersey:”#00cccc”, gkShort:”#00cccc”, skin:”#f5c5a3”, hair:”#4a3020”, text:”#fff”,  crowd:”#002868” },
+};
+const COACH_NAMES = { france:“Deschamps”, allemagne:“Nagelsmann”, bresil:“Ancelotti”, argentine:“Scaloni”, cotedivoire:“Fae”, espagne:“De la Fuente”, portugal:“Martinez”, maroc:“Regragui”, angleterre:“Southgate”, usa:“Berhalter” };
+// ─── FORMATIONS TACTIQUES ─────────────────────────────────────────────────────
+// Chaque formation définit les lignes de jeu (hors GK) pour une équipe
+// rows2 = lignes pour team2 (haut, rows 1-8) : [DEF_ROW, [MID_ROWS…], ATT_ROW]
+// rows1 = lignes pour team1 (bas, rows 9-16) : miroir
+// positions = [DEF_positions, MID_positions, ATT_positions]
+const FORMATIONS = {
+“4-3-3”: {
+label:“4-3-3”, desc:“Offensif · 4 déf, 3 mil, 3 att”,
+lines:[[4],[3],[3]],
+pos:[[“RB”,“CB”,“CB”,“LB”],[“CM”,“CM”,“CM”],[“RW”,“ST”,“LW”]],
+rows2:[2,4,6], rows1:[14,12,10],
+},
+“4-4-2”: {
+label:“4-4-2”, desc:“Classique · 4 déf, 4 mil, 2 att”,
+lines:[[4],[4],[2]],
+pos:[[“RB”,“CB”,“CB”,“LB”],[“RM”,“CM”,“CM”,“LM”],[“ST”,“ST”]],
+rows2:[2,4,6], rows1:[14,12,10],
+},
+“4-2-3-1”: {
+label:“4-2-3-1”, desc:“Équilibré · 4 déf, 2+3 mil, 1 att”,
+lines:[[4],[2,3],[1]],
+pos:[[“RB”,“CB”,“CB”,“LB”],[“DM”,“DM”],[“RW”,“AM”,“LW”],[“ST”]],
+rows2:[2,3,5,7], rows1:[14,13,11,9],
+},
+“3-5-2”: {
+label:“3-5-2”, desc:“Milieu dominant · 3 déf, 5 mil, 2 att”,
+lines:[[3],[5],[2]],
+pos:[[“CB”,“CB”,“CB”],[“RWB”,“CM”,“CM”,“CM”,“LWB”],[“ST”,“ST”]],
+rows2:[2,4,6], rows1:[14,12,10],
+},
+“3-4-3”: {
+label:“3-4-3”, desc:“Ultra offensif · 3 déf, 4 mil, 3 att”,
+lines:[[3],[4],[3]],
+pos:[[“CB”,“CB”,“CB”],[“RM”,“CM”,“CM”,“LM”],[“RW”,“ST”,“LW”]],
+rows2:[2,4,6], rows1:[14,12,10],
+},
+“5-3-2”: {
+label:“5-3-2”, desc:“Défensif · 5 déf, 3 mil, 2 att”,
+lines:[[5],[3],[2]],
+pos:[[“RWB”,“RB”,“CB”,“LB”,“LWB”],[“CM”,“CM”,“CM”],[“ST”,“ST”]],
+rows2:[2,4,6], rows1:[14,12,10],
+},
+“4-5-1”: {
+label:“4-5-1”, desc:“Très défensif · 4 déf, 5 mil, 1 att”,
+lines:[[4],[5],[1]],
+pos:[[“RB”,“CB”,“CB”,“LB”],[“RM”,“CM”,“CM”,“CM”,“LM”],[“ST”]],
+rows2:[2,4,6], rows1:[14,12,10],
+},
+“5-4-1”: {
+label:“5-4-1”, desc:“Ultra défensif · 5 déf, 4 mil, 1 att”,
+lines:[[5],[4],[1]],
+pos:[[“RWB”,“RB”,“CB”,“LB”,“LWB”],[“RM”,“CM”,“CM”,“LM”],[“ST”]],
+rows2:[2,4,6], rows1:[14,12,10],
+},
+};
+
+const ROWS=17, COLS=11;
+const FIELD_POS=[“RB”,“CB”,“CB”,“LB”,“CM”,“CM”,“CM”,“RW”,“ST”,“LW”];
+const NUMBERS=[1,2,3,4,5,6,7,8,9,10,11,12,13,14];
+
+// ─── JOUEUR SVG ───────────────────────────────────────────────────────────────
+function PlayerSVG({ t, num, pos, isKing, isGK, size=32, faded=false, facingDown=false }) {
+const skin   = t.skin   || “#f5c5a3”;
+const hair   = t.hair   || “#2c1a0e”;
+const jersey = isGK ? (t.gkJersey||”#ff9900”) : (t.jersey||”#1a3a9c”);
+const sh     = isGK ? (t.gkShort ||”#ff9900”) : (t.short ||”#111”);
+const socks  = t.socks  || “#fff”;
+const accent = t.accent || “#fff”;
+const textC  = isGK ? “#fff” : (t.text||”#fff”);
+const glow   = isKing?“drop-shadow(0 0 5px #FFD700)”:“drop-shadow(0 2px 4px rgba(0,0,0,.75))”;
+
+if (!facingDown) {
+return (
+<svg width={size} height={size*1.38} viewBox="0 0 32 44" style={{opacity:faded?.35:1,filter:glow}}>
+{isKing&&<text x="16" y="4" textAnchor="middle" fontSize="6">⭐</text>}
+<ellipse cx="16" cy="8.5" rx="5.5" ry="6"   fill={skin}/>
+<ellipse cx="16" cy="4"   rx="5.5" ry="4"   fill={hair}/>
+<rect x="13.5" y="13" width="5" height="4" fill={skin}/>
+<path d="M7,17 Q7,16 16,16 Q25,16 25,17 L26,32 L6,32 Z" fill={jersey}/>
+<text x="16" y="27" textAnchor="middle" fontSize="7" fill={textC} fontWeight="bold" fontFamily="Impact,sans-serif">{num}</text>
+{isGK&&<rect x="5.5" y="19" width="4" height="5.5" rx=".8" fill={accent}/>}
+<path d="M7,17 L3,27"  stroke={jersey} strokeWidth="5" strokeLinecap="round"/>
+<ellipse cx="3"  cy="27.5" rx="2.5" ry="2.2" fill={skin}/>
+<path d="M25,17 L29,26" stroke={jersey} strokeWidth="5" strokeLinecap="round"/>
+<ellipse cx="29" cy="26.5" rx="2.5" ry="2.2" fill={skin}/>
+<path d="M7,32 L9.5,41.5 L16,41.5 L16,34.5 L16,41.5 L22.5,41.5 L25,32 Z" fill={sh}/>
+<line x1="16" y1="32" x2="16" y2="41.5" stroke={accent} strokeWidth=".7"/>
+<rect x="8.5"  y="39.5" width="5" height="3.5" rx=".6" fill={socks}/>
+<rect x="18.5" y="39.5" width="5" height="3.5" rx=".6" fill={socks}/>
+<path d="M7.5,43 L14,43 L14,44 L7.5,44 Z" fill="#111"/>
+<path d="M18,43 L24.5,43 L24.5,44 L18,44 Z" fill="#111"/>
+{[9,11,13].map(x=><rect key={x} x={x} y="43" width="1.2" height="1.8" rx=".3" fill="#555"/>)}
+{[19.5,21.5,23].map(x=><rect key={x} x={x} y="43" width="1.2" height="1.8" rx=".3" fill="#555"/>)}
+</svg>
+);
+}
+return (
+<svg width={size} height={size*1.38} viewBox="0 0 32 44" style={{opacity:faded?.35:1,filter:glow}}>
+{isKing&&<text x="16" y="4" textAnchor="middle" fontSize="6">⭐</text>}
+<ellipse cx="16" cy="8.5"  rx="5.5" ry="6"   fill={skin}/>
+<ellipse cx="16" cy="4.5"  rx="5.5" ry="3.2" fill={hair}/>
+<circle cx="14" cy="8.5" r=".9" fill="#333"/>
+<circle cx="18" cy="8.5" r=".9" fill="#333"/>
+<path d="M14,11 Q16,13 18,11" stroke="#a0785a" strokeWidth=".8" fill="none"/>
+<rect x="13.5" y="13.5" width="5" height="3.5" fill={skin}/>
+<path d="M7,17 Q7,16 16,16 Q25,16 25,17 L26,32 L6,32 Z" fill={jersey}/>
+<path d="M12,16 Q16,19.5 20,16" stroke={accent} strokeWidth="1.3" fill="none"/>
+{isGK&&<rect x="5.5" y="19" width="4" height="5.5" rx=".8" fill={accent}/>}
+<text x="16" y="27" textAnchor="middle" fontSize="7" fill={textC} fontWeight="bold" fontFamily="Impact,sans-serif">{num}</text>
+<path d="M7,17 L3,28"  stroke={jersey} strokeWidth="5" strokeLinecap="round"/>
+<ellipse cx="3"  cy="28.5" rx="2.5" ry="2.2" fill={skin}/>
+<path d="M25,17 L29,26" stroke={jersey} strokeWidth="5" strokeLinecap="round"/>
+<ellipse cx="29" cy="26.5" rx="2.5" ry="2.2" fill={skin}/>
+<path d="M7,32 L9.5,41.5 L16,41.5 L16,34.5 L16,41.5 L22.5,41.5 L25,32 Z" fill={sh}/>
+<line x1="16" y1="32" x2="16" y2="41.5" stroke={accent} strokeWidth=".7"/>
+<rect x="8.5"  y="39.5" width="5" height="3.5" rx=".6" fill={socks}/>
+<rect x="18.5" y="39.5" width="5" height="3.5" rx=".6" fill={socks}/>
+<path d="M7.5,43 L14,43 L14,44 L7.5,44 Z" fill="#111"/>
+<path d="M18,43 L24.5,43 L24.5,44 L18,44 Z" fill="#111"/>
+{[9,11,13].map(x=><rect key={x} x={x} y="43" width="1.2" height="1.8" rx=".3" fill="#555"/>)}
+{[19.5,21.5,23].map(x=><rect key={x} x={x} y="43" width="1.2" height="1.8" rx=".3" fill="#555"/>)}
+</svg>
+);
+}
+
+// ─── COACH COSTUME ────────────────────────────────────────────────────────────
+function CoachSVG({ t, size=38 }) {
+const skin=t.skin||”#f5c5a3”, hair=t.hair||”#2c1a0e”;
+return (
+<svg width={size} height={size*1.5} viewBox=“0 0 32 48” style={{filter:“drop-shadow(0 2px 4px rgba(0,0,0,.7))”}}>
+<ellipse cx="16" cy="7"   rx="5.5" ry="6.2" fill={skin}/>
+<ellipse cx="16" cy="2.5" rx="5.5" ry="3.5" fill={hair}/>
+<circle cx="13.5" cy="7" r=".9" fill="#333"/>
+<circle cx="18.5" cy="7" r=".9" fill="#333"/>
+<path d="M13.5,9.5 Q16,11.5 18.5,9.5" stroke="#a0785a" strokeWidth=".9" fill="none"/>
+<rect x="13.5" y="12" width="5" height="3.5" fill={skin}/>
+<path d="M12,15 L16,13 L20,15 L20,18 L12,18 Z" fill="#f0f0f0"/>
+<path d="M5,16 L12,15 L16,20 L20,15 L27,16 L27,34 L5,34 Z" fill="#1a1a2e"/>
+<path d="M12,15 L16,20 L14,34 L5,34 L5,16 Z"  fill="#252545"/>
+<path d="M20,15 L16,20 L18,34 L27,34 L27,16 Z" fill="#252545"/>
+<path d=“M15,15 L17,15 L17.5,28 L16,30 L14.5,28 Z” fill={t.accent||”#cc0000”}/>
+<path d=“M15.2,14 L16.8,14 L17,15.5 L16,16.2 L15,15.5 Z” fill={t.jersey||”#1a3a9c”}/>
+<rect x="19.5" y="19" width="3.5" height="2.5" rx=".5" fill="#f0f0f0" opacity=".7"/>
+<circle cx="16" cy="22" r=".7" fill="#333"/>
+<circle cx="16" cy="25" r=".7" fill="#333"/>
+<path d="M5,17 L1,29"  stroke="#1a1a2e" strokeWidth="5.5" strokeLinecap="round"/>
+<ellipse cx="1" cy="30" rx="2.5" ry="2" fill={skin}/>
+<path d="M27,17 L31,25" stroke="#1a1a2e" strokeWidth="5.5" strokeLinecap="round"/>
+<ellipse cx="31" cy="26" rx="2.5" ry="2" fill={skin}/>
+<rect x="29" y="24.5" width="6" height="8" rx=".8" fill="#d4a843"/>
+<rect x="30" y="23.5" width="4" height="1.5" rx=".4" fill="#a07820"/>
+<line x1="30" y1="27" x2="34" y2="27" stroke="#555" strokeWidth=".6"/>
+<line x1="30" y1="29" x2="34" y2="29" stroke="#555" strokeWidth=".6"/>
+<line x1="30" y1="31" x2="34" y2="31" stroke="#555" strokeWidth=".6"/>
+<path d="M5,34 L9,46 L15.5,46 L16,38 L16.5,46 L23,46 L27,34 Z" fill="#111122"/>
+<path d="M7,45.5 L14,45.5 L14.5,47.5 L7,47.5 Z"   fill="#111"/>
+<path d="M18,45.5 L25,45.5 L25,47.5 L17.5,47.5 Z" fill="#111"/>
+</svg>
+);
+}
+
+// ─── SUPPORTER ────────────────────────────────────────────────────────────────
+function SupporterSVG({ color, accent, idx }) {
+const skins=[”#f5c5a3”,”#c8895a”,”#8B6340”,”#5c3317”,”#f0c090”,”#d4a070”];
+const hairs=[”#1a0a00”,”#2c1a0e”,”#5a4030”,”#3a2010”];
+const emojis=[“⚽”,“🏆”,“💪”,“👊”,“🔥”,“❤️”,“🎉”,“📣”];
+return (
+<svg width="17" height="25" viewBox="0 0 26 36">
+<ellipse cx="13" cy="6" rx="4.5" ry="5" fill={skins[idx%6]}/>
+<ellipse cx="13" cy="3" rx="4.5" ry="2.5" fill={hairs[idx%4]}/>
+<path d="M6,13 Q6,12 13,12 Q20,12 20,13 L21,26 L5,26 Z" fill={color}/>
+<text x="13" y="22" textAnchor="middle" fontSize="6" fill={accent} fontWeight="bold">{emojis[idx%8]}</text>
+<line x1="6"  y1="13" x2="2"  y2="8" stroke={color} strokeWidth="3.5" strokeLinecap="round"/>
+<line x1="20" y1="13" x2="24" y2="8" stroke={color} strokeWidth="3.5" strokeLinecap="round"/>
+<path d="M6,26 L8,35 L13,35 L13,29 L13,35 L18,35 L20,26 Z" fill="#222"/>
+</svg>
+);
+}
+
+function Crowd({ color, accent, count=14, side=“top”, height=48 }) {
+const[tick,setTick]=useState(0);
+useEffect(()=>{ const id=setInterval(()=>setTick(t=>t+1),480); return()=>clearInterval(id); },[]);
+return (
+<div style={{width:“100%”,height,overflow:“hidden”,background:“linear-gradient(180deg,#0a0500,#1a0e00 60%,#2a1a00)”,display:“flex”,alignItems:side===“top”?“flex-end”:“flex-start”,position:“relative”,borderLeft:“3px solid rgba(255,255,255,.12)”,borderRight:“3px solid rgba(255,255,255,.12)”,borderTop:side===“top”?“3px solid rgba(255,255,255,.12)”:“none”,borderBottom:side===“bottom”?“3px solid rgba(255,255,255,.12)”:“none”,borderRadius:side===“top”?“10px 10px 0 0”:“0 0 10px 10px”}}>
+<div style={{position:“absolute”,inset:0,backgroundImage:“repeating-linear-gradient(0deg,transparent,transparent 8px,rgba(255,255,255,.04) 8px,rgba(255,255,255,.04) 9px)”,pointerEvents:“none”}}/>
+{[.12,.42,.68,.88].map((p,i)=>(
+<div key={i} style={{position:“absolute”,left:`${p*100}%`,top:side===“top”?4:undefined,bottom:side===“bottom”?4:undefined,background:i%2===0?color:accent,width:24,height:14,borderRadius:2,fontSize:7,display:“flex”,alignItems:“center”,justifyContent:“center”,color:”#fff”,fontWeight:900,boxShadow:“0 2px 6px rgba(0,0,0,.6)”,transform:`rotate(${i%2===0?-3:3}deg)`}}>{“⚽🏆👊🔥”[i]}</div>
+))}
+<div style={{display:“flex”,alignItems:“flex-end”,gap:1,padding:“0 2px”,overflow:“hidden”,width:“100%”,paddingBottom:side===“top”?2:0,paddingTop:side===“bottom”?2:0}}>
+{Array(count).fill(null).map((_,i)=>(
+<div key={i} style={{transform:tick%4===i%4?“translateY(-5px)”:tick%4===(i+2)%4?“translateY(-2px)”:“translateY(0)”,transition:“transform .3s”,flexShrink:0}}>
+<SupporterSVG color={color} accent={accent} idx={i}/>
+</div>
+))}
+</div>
+</div>
+);
+}
+
+// ─── CAGE SVG seule (sans GK — le GK est sur le terrain) ─────────────────────
+function GoalSVG({ accentColor, W, H, barreEnHaut }) {
+const netC=8, netR=4;
+return (
+<svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{display:“block”}}>
+<rect x="0" y="0" width={W} height={H} fill="rgba(255,255,255,.05)" rx="2"/>
+{Array(netC+1).fill(null).map((*,i)=><line key={`v${i}`} x1={i*(W/netC)} y1=“0” x2={i*(W/netC)} y2={H} stroke=“rgba(255,255,255,.18)” strokeWidth=”.8”/>)}
+{Array(netR+1).fill(null).map((*,i)=><line key={`h${i}`} x1=“0” y1={i*(H/netR)} x2={W} y2={i*(H/netR)} stroke=“rgba(255,255,255,.18)” strokeWidth=”.8”/>)}
+{/* Poteaux */}
+<rect x="0"   y="0" width="5" height={H} fill="white" rx="2"/>
+<rect x={W-5} y="0" width="5" height={H} fill="white" rx="2"/>
+{/* Barre */}
+{barreEnHaut
+? <rect x="0" y="0"   width={W} height="5" fill="white" rx="2"/>
+: <rect x="0" y={H-5} width={W} height="5" fill="white" rx="2"/>
+}
+{/* Accent couleur sur poteaux */}
+<rect x="2"   y="2" width="2" height={H-4} fill={accentColor} opacity=".45" rx="1"/>
+<rect x={W-4} y="2" width="2" height={H-4} fill={accentColor} opacity=".45" rx="1"/>
+</svg>
+);
+}
+
+// ─── BANC D’UNE ÉQUIPE (vertical, style football) ─────────────────────────────
+function BenchPanel({ subs, team, tData, score, pieces, onCoachClick, onBenchClick, currentForm }) {
+const coachName = COACH_NAMES[team]||“Coach”;
+const available = subs.filter(s=>!s.used).length;
+return (
+<div style={{
+display:“flex”, flexDirection:“column”, gap:2,
+background:“linear-gradient(160deg,#111e0a,#0a1206)”,
+border:`1.5px solid ${tData.jersey}55`,
+borderRadius:8, padding:“4px 4px”,
+boxShadow:“0 4px 20px rgba(0,0,0,.8)”,
+width:54,
+}}>
+{/* En-tête : flag + score */}
+<div style={{display:“flex”,alignItems:“center”,gap:2,borderBottom:“1px solid rgba(255,255,255,.1)”,paddingBottom:3}}>
+<span style={{fontSize:12}}>{tData.flag}</span>
+<div style={{color:”#FFD700”,fontWeight:900,fontSize:14,lineHeight:1}}>{score}</div>
+<div style={{marginLeft:“auto”,color:“rgba(255,255,255,.4)”,fontSize:7}}>⚽{pieces}</div>
+</div>
+{/* Label banc cliquable */}
+<div style={{background:”#2d5a1a”,borderRadius:3,padding:“1px 2px”,fontSize:5.5,color:”#90ee90”,letterSpacing:.5,textAlign:“center”,fontWeight:700}}>BANC</div>
+{/* Coach → formation */}
+<div onClick={onCoachClick} style={{background:“rgba(0,0,0,.3)”,borderRadius:5,padding:“2px 2px”,display:“flex”,flexDirection:“column”,alignItems:“center”,gap:1,border:“1px solid rgba(255,215,0,.2)”,cursor:“pointer”,transition:“border .2s”}}
+onMouseEnter={e=>e.currentTarget.style.border=“1px solid #FFD700”}
+onMouseLeave={e=>e.currentTarget.style.border=“1px solid rgba(255,215,0,.2)”}>
+<CoachSVG t={tData} size={20}/>
+<div style={{color:”#FFD700”,fontSize:5,fontWeight:700,textAlign:“center”,lineHeight:1.1}}>{coachName}</div>
+<div style={{background:“rgba(255,215,0,.2)”,borderRadius:2,padding:“0 2px”,fontSize:5,color:”#FFD700”,fontWeight:700}}>{currentForm}</div>
+</div>
+{/* Remplaçants — clic sur le banc pour ouvrir le panneau */}
+<div onClick={available>0?onBenchClick:undefined} style={{cursor:available>0?“pointer”:“default”}}>
+<div style={{color:“rgba(255,255,255,.3)”,fontSize:5.5,letterSpacing:.5,textAlign:“center”,marginBottom:1}}>
+REMPLA.{available>0&&<span style={{color:”#00ff88”,marginLeft:2}}>{available}</span>}
+</div>
+{subs.map((s,i)=>(
+<div key={s.id} style={{display:“flex”,alignItems:“center”,gap:2,
+background:s.used?“rgba(0,0,0,.1)”:“rgba(255,255,255,.03)”,
+borderRadius:4,padding:“2px 2px”,opacity:s.used?.35:1,marginBottom:1}}>
+<PlayerSVG t={tData} num={s.number} pos=“SUB” size={14} faded={s.used} facingDown={team===“team2”}/>
+<div style={{color:s.used?”#444”:”#fff”,fontSize:7,fontWeight:700}}>#{s.number}</div>
+{!s.used&&<span style={{color:”#00ff88”,fontSize:8,marginLeft:“auto”}}>▶</span>}
+</div>
+))}
+{available>0&&<div style={{background:“rgba(0,200,80,.15)”,border:“1px solid rgba(0,200,80,.3)”,borderRadius:3,padding:“1px 3px”,fontSize:5.5,color:”#00ff88”,textAlign:“center”,marginTop:2}}>↩ Faire rentrer</div>}
+</div>
+</div>
+);
+}
+
+// ─── LOGIQUE ──────────────────────────────────────────────────────────────────
+function darkCells(row,count,rev=false){
+const cells=[],range=rev?Array.from({length:COLS},(*,i)=>COLS-1-i):Array.from({length:COLS},(*,i)=>i);
+for(const c of range) if((row+c)%2===1&&cells.length<count) cells.push(c);
+return cells;
+}
+
+// Cases claires d’une ligne (r+c)%2===0 → joueurs posés ici
+// Cases sombres (r+c)%2===1 → vides, cases de déplacement dames
+
+// Retourne les colonnes CLAIRES espacées pour n joueurs sur une ligne
+function lightColsSpaced(row, n) {
+const lights = [];
+for (let c = 0; c < COLS; c++) if ((row+c)%2===0) lights.push(c);
+// COLS=11 → 6 cases claires (row pair) ou 5 (row impair)
+if (n <= 0) return [];
+if (n >= lights.length) return lights;
+if (n === 1) return [lights[Math.floor(lights.length/2)]];
+const step = (lights.length-1)/(n-1);
+return Array.from({length:n},(_,i)=>lights[Math.round(i*step)]);
+}
+
+function place(b,row,col,team,tKey,tData,num,pos,id){
+b[row][col]={team,key:tKey,…tData,number:num,pos,isKing:false,isGK:false,id};
+}
+
+function applyFormation(b,team,tKey,tData,formation,isTeam2){
+// Place les joueurs de champ (hors GK) selon la formation
+// isTeam2=true → rows du haut (rows2), isTeam2=false → rows du bas (rows1)
+const f=FORMATIONS[formation]||FORMATIONS[“4-3-3”];
+const rows=isTeam2?f.rows2:f.rows1;
+const allPos=f.pos;
+let numIdx=1; // #1 = GK, on commence à #2
+let lineIdx=0;
+for(let li=0;li<f.lines.length;li++){
+const lineCounts=f.lines[li];
+const lineRows=Array.isArray(lineCounts)?lineCounts:[lineCounts];
+for(let ri=0;ri<lineRows.length;ri++){
+const n=lineRows[ri];
+const row=rows[lineIdx]||rows[rows.length-1];
+lineIdx++;
+const posArr=allPos[lineIdx-1+(lineIdx>rows.length?1:0)]||allPos[allPos.length-1]||[];
+lightColsSpaced(row,n).forEach((c,i)=>{
+const p=posArr[i]||“CM”;
+b[row][c]={team,key:tKey,…tData,number:NUMBERS[numIdx],pos:p,isKing:false,isGK:false,id:`${team}-f${row}-${i}`};
+numIdx++;
+});
+}
+}
+}
+
+function initBoard(t1k,t2k,kickoffTeam,form1=“4-3-3”,form2=“4-3-3”){
+const b=Array(ROWS).fill(null).map(()=>Array(COLS).fill(null));
+const t1=TEAMS[t1k],t2=TEAMS[t2k];
+
+// ── GK team2 (haut) row 1 ──
+lightColsSpaced(1,1).forEach(c=>{
+b[1][c]={team:“team2”,key:t2k,…t2,number:1,pos:“GK”,isKing:false,isGK:true,id:“t2-gk”};
+});
+// ── Formation team2 ──
+applyFormation(b,“team2”,t2k,t2,form2,true);
+
+// ── GK team1 (bas) row 15 ──
+lightColsSpaced(15,1).forEach(c=>{
+b[15][c]={team:“team1”,key:t1k,…t1,number:1,pos:“GK”,isKing:false,isGK:true,id:“t1-gk”};
+});
+// ── Formation team1 ──
+applyFormation(b,“team1”,t1k,t1,form1,false);
+
+// ── COUP D’ENVOI ──
+// 2 joueurs de kickoffTeam SEULEMENT sur leur ligne (row 9 ou 8)
+// → DANS le cercle (rayon 2 = rows 7-11 côté hauteur, mais cols centrales)
+// L’adversaire reste sur row 7 ou 10 → à l’extérieur du cercle
+const kt=kickoffTeam===“team1”?t1:t2, ktk=kickoffTeam===“team1”?t1k:t2k;
+// team1 engage depuis row 9 (sa moitié), team2 depuis row 8 (sa moitié)
+const koRow=kickoffTeam===“team1”?9:8;
+// Vider cette ligne (sécurité)
+for(let c=0;c<COLS;c++) b[koRow][c]=null;
+// 2 cases claires les plus centrales de koRow
+const allLight=[];
+for(let c=0;c<COLS;c++) if((koRow+c)%2===0) allLight.push(c);
+const mid=Math.floor(allLight.length/2);
+const koCols=allLight.length>=2?[allLight[mid-1],allLight[mid]]:[allLight[0]];
+
+// ── RETIRER 2 ATT du kickoffTeam pour rester à 11 joueurs ──
+// Les 2 joueurs KO REMPLACENT 2 ATT (ST et un ailier) — pas des joueurs en plus
+const attRow=kickoffTeam===“team1”?10:6;
+let removed=0;
+for(let c=0;c<COLS&&removed<2;c++){
+if(b[attRow][c]&&b[attRow][c].team===kickoffTeam){ b[attRow][c]=null; removed++; }
+}
+
+koCols.forEach((c,i)=>{
+b[koRow][c]={team:kickoffTeam,key:ktk,…kt,number:NUMBERS[9+i],pos:i===0?“ST”:“LW”,isKing:false,isGK:false,id:`${kickoffTeam}-ko${i}`};
+});
+
+return b;
+}
+
+function initBench(t1k,t2k){
+return {
+team1:[11,12,13].map(i=>({team:“team1”,key:t1k,…TEAMS[t1k],number:NUMBERS[i],pos:“SUB”,isKing:false,id:`t1-b${i}`,used:false})),
+team2:[11,12,13].map(i=>({team:“team2”,key:t2k,…TEAMS[t2k],number:NUMBERS[i],pos:“SUB”,isKing:false,id:`t2-b${i}`,used:false})),
+};
+}
+
+function getMoves(board,r,c,team){
+const p=board[r][c]; if(!p||p.team!==team) return [];
+// Déplacements en diagonale — vers cases claires uniquement : (nr+nc)%2===0
+const dirs=p.isKing?[[-1,-1],[-1,1],[1,-1],[1,1]]:team===“team1”?[[-1,-1],[-1,1]]:[[1,-1],[1,1]];
+const mvs=[];
+for(const[dr,dc]of dirs){
+const nr=r+dr, nc=c+dc;
+if(nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;
+if((nr+nc)%2!==0) continue; // case sombre → interdite
+if(!board[nr][nc]){
+mvs.push({from:[r,c],to:[nr,nc],capture:null});
+} else if(board[nr][nc].team!==team){
+const jr=nr+dr, jc=nc+dc;
+if(jr>=0&&jr<ROWS&&jc>=0&&jc<COLS&&(jr+jc)%2===0&&!board[jr][jc])
+mvs.push({from:[r,c],to:[jr,jc],capture:[nr,nc]});
+}
+}
+return mvs;
+}
+function allMoves(board,team){
+const all=[];
+for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)all.push(…getMoves(board,r,c,team));
+const caps=all.filter(m=>m.capture);
+return caps.length?caps:all;
+}
+function applyMove(board,mv){
+const nb=board.map(row=>row.map(c=>c?{…c}:null));
+const p={…nb[mv.from[0]][mv.from[1]]};
+nb[mv.from[0]][mv.from[1]]=null;
+if(mv.capture)nb[mv.capture[0]][mv.capture[1]]=null;
+// Promotion capitaine : atteindre la dernière ligne adverse
+if(p.team===“team1”&&mv.to[0]===0&&!mv.capture)p.isKing=true;
+if(p.team===“team2”&&mv.to[0]===ROWS-1&&!mv.capture)p.isKing=true;
+nb[mv.to[0]][mv.to[1]]=p;
+return nb;
+}
+function isGoal(mv,team){
+if(mv.capture)return false;
+// team1 marque en atteignant row 0, team2 en atteignant row ROWS-1 (16)
+return(team===“team1”&&mv.to[0]===0)||(team===“team2”&&mv.to[0]===ROWS-1);
+}
+
+// ─── MAIN ─────────────────────────────────────────────────────────────────────
+export default function FootDames(){
+const[t1k,setT1k]=useState(“france”);
+const[t2k,setT2k]=useState(“bresil”);
+const[board,setBoard]=useState(null);
+const[bench,setBench]=useState(null);
+const[turn,setTurn]=useState(“team1”);
+const[kickoffTeam,setKickoffTeam]=useState(“team1”);
+const[half,setHalf]=useState(1);
+const[sel,setSel]=useState(null);
+const[valids,setValids]=useState([]);
+const[scores,setScores]=useState({team1:0,team2:0});
+const[msg,setMsg]=useState(null);
+const[phase,setPhase]=useState(“setup”);
+const[goalAnim,setGoalAnim]=useState(null);
+const[showSubPanel,setShowSubPanel]=useState(null); // “team1”|“team2”|null
+const[subSelected,setSubSelected]=useState([]); // indices sélectionnés
+// Formations tactiques
+const[form1,setForm1]=useState(“4-3-3”);
+const[form2,setForm2]=useState(“4-3-3”);
+const[showFormPicker,setShowFormPicker]=useState(null); // “team1”|“team2”|null
+
+const t1=TEAMS[t1k],t2=TEAMS[t2k];
+const countPieces=t=>board?board.flat().filter(p=>p&&p.team===t).length:0;
+
+const startGame=(ko,halfNum,keepBench=false,f1=form1,f2=form2)=>{
+setBoard(initBoard(t1k,t2k,ko,f1,f2));
+if(!keepBench)setBench(initBench(t1k,t2k));
+setTurn(ko);setKickoffTeam(ko);setHalf(halfNum);
+setSel(null);setValids([]);setMsg(null);setGoalAnim(null);setShowSubPanel(null);setSubSelected([]);
+setShowFormPicker(null);
+setPhase(“playing”);
+};
+const start=()=>{
+setBench(initBench(t1k,t2k));setScores({team1:0,team2:0});
+startGame(“team1”,1,false,form1,form2);
+};
+// Appliquer une nouvelle formation en cours de match (changement tactique)
+const changeFormation=(team,newForm)=>{
+const f1=team===“team1”?newForm:form1;
+const f2=team===“team2”?newForm:form2;
+if(team===“team1”) setForm1(newForm);
+else setForm2(newForm);
+setBoard(initBoard(t1k,t2k,kickoffTeam,f1,f2));
+setShowFormPicker(null);
+setMsg(`⚽ Formation ${newForm} appliquée !`);
+setTimeout(()=>setMsg(null),2000);
+};
+const startSecondHalf=()=>{
+const ko=kickoffTeam===“team1”?“team2”:“team1”;
+startGame(ko,2,true);
+setMsg(“⏱️ 2ème mi-temps — coup d’envoi inversé !”);
+};
+
+// Faire rentrer les remplaçants sélectionnés (indices dans subSelected)
+const confirmSubs=useCallback((team)=>{
+if(!bench||subSelected.length===0)return;
+const nb=board.map(row=>row.map(c=>c?{…c}:null));
+const halfStart=team===“team1”?9:0;
+const halfEnd=team===“team1”?ROWS:8;
+let placed=[];
+const toPlace=subSelected.filter(i=>!bench[team][i].used).map(i=>bench[team][i]);
+for(const sub of toPlace){
+let ok=false;
+for(let r=halfStart;r<halfEnd&&!ok;r++)
+for(let c=0;c<COLS&&!ok;c++)
+if((r+c)%2===0&&!nb[r][c]){
+nb[r][c]={…sub,used:false,pos:“SUB”};
+placed.push(sub.number);
+ok=true;
+}
+}
+if(placed.length===0){setMsg(“Aucune case libre !”);return;}
+setBoard(nb);
+setBench(prev=>({…prev,[team]:prev[team].map((p,j)=>subSelected.includes(j)?{…p,used:true}:p)}));
+setShowSubPanel(null);setSubSelected([]);
+setMsg(`↩ Joueur${placed.length>1?"s":""} #${placed.join(", #")} ${placed.length>1?"entrent":"entre"} en jeu !`);
+setTimeout(()=>setMsg(null),2500);
+},[board,bench,subSelected]);
+
+const handleCell=useCallback((r,c)=>{
+if(phase!==“playing”||goalAnim||showSubPanel)return;
+const piece=board[r][c];
+if(sel){
+const mv=valids.find(m=>m.to[0]===r&&m.to[1]===c);
+if(mv){
+if(isGoal(mv,turn)){
+const nb=board.map(row=>row.map(c=>c?{…c}:null));
+nb[mv.from[0]][mv.from[1]]=null;
+const sc={…scores,[turn]:scores[turn]+1};
+setScores(sc);setGoalAnim(turn);setSel(null);setValids([]);
+setMsg(`⚽ BUT ! ${turn==="team1"?t1.flag+" "+t1.name:t2.flag+" "+t2.name} MARQUE !`);
+const nextKO=turn===“team1”?“team2”:“team1”;
+setTimeout(()=>{
+setGoalAnim(null);
+setBoard(initBoard(t1k,t2k,nextKO,form1,form2));
+setKickoffTeam(nextKO);setTurn(nextKO);
+setMsg(`${nextKO==="team1"?t1.flag:t2.flag} remet au centre`);
+setTimeout(()=>setMsg(null),1800);
+},2600);
+return;
+}
+const nb=applyMove(board,mv);setBoard(nb);setSel(null);setValids([]);
+const next=turn===“team1”?“team2”:“team1”;
+if(allMoves(nb,next).length===0){setMsg(`🏆 ${turn==="team1"?t1.flag:t2.flag} GAGNE !`);setPhase(“over”);}
+else{setTurn(next);setMsg(mv.capture?`⚡ TACLE ! #${board[mv.capture[0]][mv.capture[1]]?.number} éliminé !`:null);}
+return;
+}
+setSel(null);setValids([]);
+}
+if(piece&&piece.team===turn){
+const caps=allMoves(board,turn).filter(m=>m.capture);
+const pm=getMoves(board,r,c,turn);
+const filtered=caps.length?pm.filter(m=>m.capture):pm;
+if(filtered.length>0){setSel([r,c]);setValids(filtered);setMsg(null);}
+else if(caps.length)setMsg(“⚠️ Tacle obligatoire !”);
+else setMsg(“Ce joueur ne peut pas bouger.”);
+}else{setSel(null);setValids([]);}
+},[board,sel,valids,turn,phase,scores,goalAnim,showSubPanel,t1,t2,t1k,t2k]);
+
+const CELL=28;
+const W=COLS*CELL,H=ROWS*CELL;
+const GOAL_W=5*CELL,GOAL_H=CELL;
+const GOAL_X=(W-GOAL_W)/2;
+
+// ─── SETUP ──────────────────────────────────────────────────────────────────
+if(phase===“setup”)return(
+<div style={{minHeight:“100vh”,background:“radial-gradient(ellipse at 50% 40%,#0e2e0e,#050905 80%)”,display:“flex”,flexDirection:“column”,alignItems:“center”,justifyContent:“center”,fontFamily:”‘Impact’,‘Trebuchet MS’,sans-serif”,padding:16,gap:16}}>
+<style>{`@keyframes glow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.5)}}@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}@keyframes goal{0%{opacity:0}8%{opacity:1}88%{opacity:1}100%{opacity:0}}@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}@keyframes up{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
+<h1 style={{fontSize:32,fontWeight:900,margin:0,letterSpacing:4,background:“linear-gradient(90deg,#FFD700,#fff 50%,#FFD700)”,WebkitBackgroundClip:“text”,WebkitTextFillColor:“transparent”,animation:“glow 2s infinite”}}>⚽ FOOT DAMES</h1>
+<p style={{color:“rgba(255,255,255,.35)”,fontSize:10,margin:0,letterSpacing:3}}>TERRAIN DAMIER · 11 VS 11 · FOULE · BANCS · COACHES</p>
+<div style={{background:“rgba(255,255,255,.04)”,backdropFilter:“blur(10px)”,border:“1px solid rgba(255,255,255,.1)”,borderRadius:20,padding:22,width:“100%”,maxWidth:420,display:“flex”,flexDirection:“column”,gap:16}}>
+<div style={{display:“flex”,justifyContent:“space-around”,alignItems:“center”,gap:12}}>
+{[{label:“ÉQUIPE BAS ↑”,val:t1k,set:setT1k,ex:t2k},{label:“ÉQUIPE HAUT ↓”,val:t2k,set:setT2k,ex:t1k}].map(({label,val,set,ex})=>(
+<div key={label} style={{display:“flex”,flexDirection:“column”,alignItems:“center”,gap:5}}>
+<span style={{color:“rgba(255,255,255,.5)”,fontSize:9,fontWeight:700,letterSpacing:2}}>{label}</span>
+<select value={val} onChange={e=>set(e.target.value)} style={{background:“rgba(0,0,0,.5)”,color:”#fff”,border:“1.5px solid rgba(255,255,255,.2)”,borderRadius:8,padding:“5px 8px”,fontSize:12,cursor:“pointer”}}>
+{Object.entries(TEAMS).filter(([k])=>k!==ex).map(([k,t])=><option key={k} value={k}>{t.flag} {t.name}</option>)}
+</select>
+</div>
+))}
+</div>
+<div style={{display:“flex”,gap:10}}>
+{[{k:t1k,t:t1,fd:false,lbl:“Vue DOS ↑”},{k:t2k,t:t2,fd:true,lbl:“Vue FACE ↓”}].map(({k,t,fd,lbl})=>(
+<div key={k} style={{flex:1,background:`${t.jersey}22`,border:`1px solid ${t.jersey}55`,borderRadius:12,padding:10,textAlign:“center”}}>
+<div style={{fontSize:22}}>{t.flag}</div>
+<div style={{color:”#fff”,fontWeight:700,fontSize:12}}>{t.name}</div>
+<div style={{display:“flex”,justifyContent:“center”,gap:4,marginTop:6,alignItems:“flex-end”}}>
+<PlayerSVG t={t} num={9}  pos="ST" size={27} facingDown={fd}/>
+<PlayerSVG t={t} num={1}  pos="GK" isGK size={27} facingDown={fd}/>
+<PlayerSVG t={t} num={10} pos="CM" size={27} facingDown={fd}/>
+</div>
+<div style={{color:“rgba(255,255,255,.4)”,fontSize:8,marginTop:3}}>{lbl} — GK couleur unique</div>
+</div>
+))}
+</div>
+<div style={{background:“rgba(255,255,255,.04)”,borderRadius:10,padding:12,fontSize:11,color:“rgba(255,255,255,.6)”,lineHeight:1.8}}>
+<b style={{color:”#FFD700”}}>📋 RÈGLES</b><br/>
+⚽ <b>But</b> : atteindre la ligne 0 (ou 15) adverse sans capture<br/>
+🦵 <b>Tacle</b> : sauter par-dessus → éliminé · obligatoire si dispo<br/>
+⭐ <b>Capitaine</b> : atteindre le fond → joue dans tous les sens<br/>
+🔄 Après un but : équipe adverse remet au centre<br/>
+⏱️ Mi-temps : coup d’envoi inversé
+</div>
+<button onClick={start} style={{padding:“13px 0”,background:“linear-gradient(135deg,#FFD700,#FF8C00)”,border:“none”,borderRadius:12,color:”#000”,fontWeight:900,fontSize:16,cursor:“pointer”,letterSpacing:2,boxShadow:“0 4px 24px rgba(255,215,0,.35)”}}>⚽ COUP D’ENVOI</button>
+</div>
+</div>
+);
+
+// ─── JEU ────────────────────────────────────────────────────────────────────
+return(
+<div style={{minHeight:“100vh”,background:“radial-gradient(ellipse at 50% 40%,#0d2a0d,#040904 80%)”,display:“flex”,flexDirection:“column”,alignItems:“center”,fontFamily:”‘Impact’,‘Trebuchet MS’,sans-serif”,padding:“6px 4px”,gap:5}}>
+<style>{`@keyframes pulse{0%,100%{opacity:.65;transform:scale(1)}50%{opacity:1;transform:scale(1.2)}}@keyframes goal{0%{opacity:0}8%{opacity:1}88%{opacity:1}100%{opacity:0}}@keyframes bounce{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-16px) scale(1.1)}}@keyframes up{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
+
+```
+  {/* HEADER */}
+  <div style={{display:"flex",alignItems:"center",gap:6,animation:"up .3s",flexWrap:"wrap",justifyContent:"center"}}>
+    <h1 style={{fontSize:17,fontWeight:900,margin:0,letterSpacing:3,background:"linear-gradient(90deg,#FFD700,#fff,#FFD700)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>⚽ FOOT DAMES</h1>
+    <div style={{background:"rgba(0,0,0,.4)",borderRadius:5,padding:"2px 7px",color:"#aaa",fontSize:9,letterSpacing:1}}>{half===1?"1ère MT":"2ème MT"}</div>
+    {half===1&&phase==="playing"&&<button onClick={startSecondHalf} style={{padding:"3px 7px",background:"rgba(255,165,0,.15)",border:"1px solid rgba(255,165,0,.4)",borderRadius:6,color:"#ffa500",cursor:"pointer",fontSize:9,fontWeight:700}}>⏱️ Mi-temps</button>}
+    <button onClick={start} style={{padding:"3px 7px",background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,color:"#fff",cursor:"pointer",fontSize:9}}>🔄</button>
+    <button onClick={()=>{setPhase("setup");setSubMode(false);}} style={{padding:"3px 7px",background:"rgba(255,215,0,.12)",border:"1px solid rgba(255,215,0,.3)",borderRadius:6,color:"#FFD700",cursor:"pointer",fontSize:9}}>🏟️</button>
+  </div>
+
+  {phase==="playing"&&!goalAnim&&(
+    <div style={{background:"rgba(0,0,0,.45)",borderRadius:7,padding:"3px 12px",color:"#fff",fontSize:10,border:`1px solid ${turn==="team1"?t1.jersey:t2.jersey}88`,animation:"up .2s"}}>
+      {turn==="team1"?t1.flag:t2.flag} <b>{turn==="team1"?t1.name:t2.name}</b> joue
+      
+    </div>
+  )}
+  {msg&&(
+    <div style={{background:goalAnim?"rgba(255,215,0,.2)":"rgba(0,0,0,.6)",border:`1px solid ${goalAnim?"#FFD700":"rgba(255,255,255,.15)"}`,borderRadius:8,padding:"5px 14px",color:goalAnim?"#FFD700":"#fff",fontWeight:700,fontSize:goalAnim?14:10,textAlign:"center",maxWidth:350,animation:goalAnim?"bounce .45s infinite":"up .2s"}}>
+      {msg}
+    </div>
+  )}
+
+  {/* ── LAYOUT PRINCIPAL ── */}
+  <div style={{display:"flex",gap:7,alignItems:"flex-start",justifyContent:"center"}}>
+
+    {/* TERRAIN */}
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",flexShrink:0}}>
+
+      {/* Tribunes haut */}
+      <div style={{width:W}}>
+        <Crowd color={t1.crowd||t1.jersey} accent={t1.accent} count={Math.floor(W/17)} side="top" height={46}/>
+      </div>
+
+      {/* Cage haut — team1 défend (GK team1 est sur row 1, devant) */}
+      <div style={{width:W,height:GOAL_H,position:"relative"}}>
+        <div style={{position:"absolute",left:GOAL_X,top:0,width:GOAL_W,height:GOAL_H}}>
+          <GoalSVG accentColor={t1.accent} W={GOAL_W} H={GOAL_H} barreEnHaut={true}/>
+        </div>
+        <div style={{position:"absolute",left:4,top:"50%",transform:"translateY(-50%)",color:t1.accent,fontSize:7.5,fontWeight:900}}>{t1.flag} BUT</div>
+      </div>
+
+      {/* GRILLE */}
+      <div style={{display:"grid",gridTemplateColumns:`repeat(${COLS},${CELL}px)`,gridTemplateRows:`repeat(${ROWS},${CELL}px)`,border:"3px solid rgba(255,255,255,.55)",position:"relative",boxShadow:"0 0 50px rgba(0,0,0,.9)"}}>
+        {/* Marquages terrain */}
+        <div style={{position:"absolute",top:H/2-2,left:0,right:0,height:4,background:"rgba(255,255,255,.72)",pointerEvents:"none",zIndex:3}}/>
+        {/* Rond central : rayon = 2 cases = 2*CELL px, diamètre 4*CELL */}
+        <div style={{position:"absolute",top:H/2-(2*CELL),left:W/2-(2*CELL),width:4*CELL,height:4*CELL,borderRadius:"50%",border:"3px solid rgba(255,255,255,.68)",pointerEvents:"none",zIndex:3}}/>
+        {/* Point central */}
+        <div style={{position:"absolute",top:H/2-5,left:W/2-5,width:10,height:10,borderRadius:"50%",background:"rgba(255,255,255,.85)",pointerEvents:"none",zIndex:3}}/>
+        {/* Surfaces de réparation haut et bas (3 lignes de haut) */}
+        <div style={{position:"absolute",top:0,left:W*.15,width:W*.7,height:CELL*3,border:"3px solid rgba(255,255,255,.62)",borderTop:"none",pointerEvents:"none",zIndex:3}}/>
+        <div style={{position:"absolute",bottom:0,left:W*.15,width:W*.7,height:CELL*3,border:"3px solid rgba(255,255,255,.62)",borderBottom:"none",pointerEvents:"none",zIndex:3}}/>
+        {/* Petits rectangles (surface de but) */}
+        <div style={{position:"absolute",top:0,left:W*.3,width:W*.4,height:CELL*1.5,border:"3px solid rgba(255,255,255,.52)",borderTop:"none",pointerEvents:"none",zIndex:3}}/>
+        <div style={{position:"absolute",bottom:0,left:W*.3,width:W*.4,height:CELL*1.5,border:"3px solid rgba(255,255,255,.52)",borderBottom:"none",pointerEvents:"none",zIndex:3}}/>
+
+        {/* Cellules — joueurs sur cases CLAIRES uniquement, damier maintenu visuellement */}
+        {Array(ROWS).fill(null).map((_,r)=>
+          Array(COLS).fill(null).map((_,c)=>{
+            const light=(r+c)%2===0;  // case claire = jouable
+            const piece=board[r][c];
+            const isSel=sel&&sel[0]===r&&sel[1]===c;
+            const mv=valids.find(m=>m.to[0]===r&&m.to[1]===c);
+            const stripe=Math.floor(r/2)%2===0;
+            const bg=light?(stripe?"#38c45c":"#32b350"):(stripe?"#1a6830":"#1c7035");
+            const clickable=light&&(!!(piece&&piece.team===turn)||!!mv);
+            return(
+              <div key={`${r}-${c}`} onClick={()=>light&&handleCell(r,c)}
+                style={{width:CELL,height:CELL,background:bg,display:"flex",alignItems:"center",justifyContent:"center",cursor:clickable?"pointer":"default",boxSizing:"border-box",position:"relative",zIndex:1,outline:isSel?"3px solid #FFD700":mv?`2px solid ${mv.capture?"#ff4444":"#44ff88"}`:"none",outlineOffset:"-2px"}}>
+                {light&&piece&&(
+                  <PlayerSVG t={piece} num={piece.number} pos={piece.pos} isKing={piece.isKing} isGK={piece.isGK} size={CELL-4} facingDown={piece.team==="team2"}/>
+                )}
+                {light&&!piece&&mv&&(
+                  <div style={{width:CELL*.44,height:CELL*.44,borderRadius:"50%",background:mv.capture?"rgba(255,50,50,.72)":"rgba(60,255,120,.72)",boxShadow:mv.capture?"0 0 10px #ff3333":"0 0 10px #3dff78",animation:"pulse .75s infinite"}}/>
+                )}
+              </div>
+            );
+          })
+        )}
+
+        {goalAnim&&(
+          <div style={{position:"absolute",inset:0,background:"rgba(255,220,0,.18)",animation:"goal 2.6s ease forwards",pointerEvents:"none",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <span style={{fontSize:68,animation:"bounce .42s infinite"}}>⚽</span>
+          </div>
+        )}
+      </div>
+
+      {/* Cage bas — team2 défend (GK team2 est sur row 14, devant) */}
+      <div style={{width:W,height:GOAL_H,position:"relative"}}>
+        <div style={{position:"absolute",left:GOAL_X,top:0,width:GOAL_W,height:GOAL_H}}>
+          <GoalSVG accentColor={t2.accent} W={GOAL_W} H={GOAL_H} barreEnHaut={false}/>
+        </div>
+        <div style={{position:"absolute",right:4,top:"50%",transform:"translateY(-50%)",color:t2.accent,fontSize:7.5,fontWeight:900}}>{t2.flag} BUT</div>
+      </div>
+
+      {/* Tribunes bas */}
+      <div style={{width:W}}>
+        <Crowd color={t2.crowd||t2.jersey} accent={t2.accent} count={Math.floor(W/17)} side="bottom" height={46}/>
+      </div>
+    </div>
+
+    {/* ── COLONNE BANCS (haut = team2, bas = team1) ── */}
+    {bench&&(
+      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,paddingTop:46}}>
+        <BenchPanel subs={bench.team2} team="team2" tData={t2} score={scores.team2} pieces={countPieces("team2")} onCoachClick={()=>setShowFormPicker(f=>f==="team2"?null:"team2")} onBenchClick={()=>{setShowSubPanel("team2");setSubSelected([]);}} currentForm={form2}/>
+
+        <BenchPanel subs={bench.team1} team="team1" tData={t1} score={scores.team1} pieces={countPieces("team1")} onCoachClick={()=>setShowFormPicker(f=>f==="team1"?null:"team1")} onBenchClick={()=>{setShowSubPanel("team1");setSubSelected([]);}} currentForm={form1}/>
+      </div>
+    )}
+  </div>
+
+  {/* ── MODAL REMPLACEMENT ── */}
+  {showSubPanel&&phase==="playing"&&(
+    <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.78)",zIndex:50,display:"flex",alignItems:"center",justifyContent:"center"}}
+      onClick={()=>{setShowSubPanel(null);setSubSelected([]);}}>
+      <div onClick={e=>e.stopPropagation()} style={{
+        background:"linear-gradient(135deg,#0d2a10,#1a3a1a)",
+        border:`2px solid ${showSubPanel==="team1"?t1.accent:t2.accent}`,
+        borderRadius:16,padding:"16px 14px",width:270,
+        boxShadow:"0 20px 60px rgba(0,0,0,.9)",
+      }}>
+        {/* Header */}
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+          <span style={{fontSize:22}}>{showSubPanel==="team1"?t1.flag:t2.flag}</span>
+          <div>
+            <div style={{color:"#fff",fontWeight:900,fontSize:13}}>{showSubPanel==="team1"?t1.name:t2.name}</div>
+            <div style={{color:"rgba(255,255,255,.45)",fontSize:10}}>Choisir les remplaçants à faire rentrer</div>
+          </div>
+          <button onClick={()=>{setShowSubPanel(null);setSubSelected([]);}} style={{marginLeft:"auto",background:"none",border:"none",color:"rgba(255,255,255,.4)",fontSize:18,cursor:"pointer"}}>✕</button>
+        </div>
+
+        {/* Liste des remplaçants */}
+        <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
+          {(showSubPanel==="team1"?bench.team1:bench.team2).map((s,i)=>{
+            const tData=showSubPanel==="team1"?t1:t2;
+            const isSelected=subSelected.includes(i);
+            const isUsed=s.used;
+            return(
+              <div key={s.id} onClick={()=>{
+                if(isUsed)return;
+                setSubSelected(prev=>prev.includes(i)?prev.filter(x=>x!==i):[...prev,i]);
+              }} style={{
+                display:"flex",alignItems:"center",gap:10,
+                background:isUsed?"rgba(0,0,0,.2)":isSelected?"rgba(0,255,100,.12)":"rgba(255,255,255,.05)",
+                border:`1.5px solid ${isUsed?"rgba(255,255,255,.05)":isSelected?"#00ff88":"rgba(255,255,255,.1)"}`,
+                borderRadius:10,padding:"8px 10px",
+                cursor:isUsed?"default":"pointer",
+                opacity:isUsed?.35:1,
+                transition:"all .15s",
+              }}>
+                <PlayerSVG t={tData} num={s.number} pos="SUB" size={28} faded={isUsed} facingDown={showSubPanel==="team2"}/>
+                <div style={{flex:1}}>
+                  <div style={{color:isUsed?"#555":"#fff",fontWeight:900,fontSize:14}}>#{s.number}</div>
+                  <div style={{color:isUsed?"#444":"rgba(255,255,255,.5)",fontSize:9}}>{isUsed?"Déjà rentré":"Disponible"}</div>
+                </div>
+                {/* Checkbox */}
+                {!isUsed&&(
+                  <div style={{
+                    width:20,height:20,borderRadius:4,border:`2px solid ${isSelected?"#00ff88":"rgba(255,255,255,.3)"}`,
+                    background:isSelected?"#00ff88":"transparent",
+                    display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
+                  }}>
+                    {isSelected&&<span style={{color:"#000",fontSize:12,fontWeight:900}}>✓</span>}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Boutons d'action */}
+        <div style={{display:"flex",gap:6,flexDirection:"column"}}>
+          {/* Sélection rapide */}
+          <div style={{display:"flex",gap:4}}>
+            {[1,2,3].map(n=>{
+              const avail=(showSubPanel==="team1"?bench.team1:bench.team2).filter(s=>!s.used);
+              return avail.length>=n&&(
+                <button key={n} onClick={()=>{
+                  const av=(showSubPanel==="team1"?bench.team1:bench.team2)
+                    .map((s,i)=>({s,i})).filter(({s})=>!s.used).slice(0,n).map(({i})=>i);
+                  setSubSelected(av);
+                }} style={{flex:1,padding:"4px 0",background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.15)",borderRadius:6,color:"#fff",cursor:"pointer",fontSize:10,fontWeight:700}}>
+                  {n} rempla.
+                </button>
+              );
+            })}
+          </div>
+          {/* Confirmer */}
+          <button
+            disabled={subSelected.length===0}
+            onClick={()=>confirmSubs(showSubPanel)}
+            style={{
+              padding:"10px 0",
+              background:subSelected.length>0?"linear-gradient(135deg,#00cc55,#009933)":"rgba(255,255,255,.1)",
+              border:"none",borderRadius:10,
+              color:subSelected.length>0?"#fff":"rgba(255,255,255,.3)",
+              fontWeight:900,fontSize:14,cursor:subSelected.length>0?"pointer":"default",
+              letterSpacing:1,transition:"all .2s",
+            }}>
+            {subSelected.length===0
+              ? "Sélectionne des joueurs"
+              : `↩ Faire rentrer ${subSelected.length} joueur${subSelected.length>1?"s":""}`
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
+
+  {/* ── SÉLECTEUR DE FORMATION (modal) ── */}
+  {showFormPicker&&phase==="playing"&&(
+    <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.75)",zIndex:50,display:"flex",alignItems:"center",justifyContent:"center"}}
+      onClick={()=>setShowFormPicker(null)}>
+      <div onClick={e=>e.stopPropagation()} style={{
+        background:"linear-gradient(135deg,#0e2a0e,#1a3a1a)",
+        border:`2px solid ${showFormPicker==="team1"?t1.accent:t2.accent}`,
+        borderRadius:16,padding:"16px 14px",width:280,
+        boxShadow:"0 20px 60px rgba(0,0,0,.9)",
+      }}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+          <span style={{fontSize:20}}>{showFormPicker==="team1"?t1.flag:t2.flag}</span>
+          <div>
+            <div style={{color:"#fff",fontWeight:900,fontSize:13}}>{showFormPicker==="team1"?t1.name:t2.name}</div>
+            <div style={{color:"rgba(255,255,255,.45)",fontSize:10}}>Choisir une formation tactique</div>
+          </div>
+          <button onClick={()=>setShowFormPicker(null)} style={{marginLeft:"auto",background:"none",border:"none",color:"rgba(255,255,255,.4)",fontSize:18,cursor:"pointer",lineHeight:1}}>✕</button>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {Object.entries(FORMATIONS).map(([key,f])=>{
+            const isCurrent=(showFormPicker==="team1"?form1:form2)===key;
+            return(
+              <div key={key} onClick={()=>changeFormation(showFormPicker,key)}
+                style={{
+                  display:"flex",alignItems:"center",gap:10,
+                  background:isCurrent?"rgba(255,215,0,.18)":"rgba(255,255,255,.05)",
+                  border:`1.5px solid ${isCurrent?"#FFD700":"rgba(255,255,255,.1)"}`,
+                  borderRadius:10,padding:"8px 10px",cursor:"pointer",
+                  transition:"background .15s, border .15s",
+                }}
+                onMouseEnter={e=>{if(!isCurrent)e.currentTarget.style.background="rgba(255,255,255,.1)"}}
+                onMouseLeave={e=>{if(!isCurrent)e.currentTarget.style.background="rgba(255,255,255,.05)"}}>
+                {/* Mini visualisation de la formation */}
+                <div style={{width:36,height:48,background:"#1a5c2a",borderRadius:4,position:"relative",flexShrink:0,border:"1px solid rgba(255,255,255,.2)"}}>
+                  <div style={{position:"absolute",top:"50%",left:0,right:0,height:1,background:"rgba(255,255,255,.3)"}}/>
+                  {f.lines.flat().map((n,li)=>{
+                    const totalLines=f.lines.flat().length;
+                    const y=((li+1)/(totalLines+1))*100;
+                    return Array.from({length:n},(_,pi)=>(
+                      <div key={`${li}-${pi}`} style={{
+                        position:"absolute",
+                        top:`${y}%`,left:`${((pi+1)/(n+1))*100}%`,
+                        width:5,height:5,borderRadius:"50%",
+                        background:isCurrent?"#FFD700":"rgba(255,255,255,.7)",
+                        transform:"translate(-50%,-50%)",
+                      }}/>
+                    ));
+                  })}
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{color:isCurrent?"#FFD700":"#fff",fontWeight:900,fontSize:14,letterSpacing:1}}>{f.label}</div>
+                  <div style={{color:"rgba(255,255,255,.5)",fontSize:9,marginTop:2}}>{f.desc}</div>
+                </div>
+                {isCurrent&&<span style={{color:"#FFD700",fontSize:14}}>✓</span>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  )}
+
+  {phase==="over"&&(
+    <div style={{background:"linear-gradient(135deg,rgba(255,215,0,.18),rgba(255,140,0,.12))",border:"2px solid #FFD700",borderRadius:14,padding:"12px 24px",textAlign:"center",animation:"up .4s"}}>
+      <div style={{fontSize:34}}>🏆</div>
+      <div style={{color:"#FFD700",fontWeight:900,fontSize:18,letterSpacing:2}}>FIN DU MATCH</div>
+      <div style={{color:"#fff",fontSize:14,marginTop:4}}>{t1.flag} <b>{scores.team1}</b> — <b>{scores.team2}</b> {t2.flag}</div>
+      <button onClick={start} style={{marginTop:10,padding:"8px 18px",background:"linear-gradient(135deg,#FFD700,#FF8C00)",border:"none",borderRadius:8,color:"#000",fontWeight:900,fontSize:12,cursor:"pointer"}}>🔄 Rejouer</button>
+    </div>
+  )}
+</div>
+```
+
+);
+}
